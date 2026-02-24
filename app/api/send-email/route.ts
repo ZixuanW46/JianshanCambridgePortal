@@ -14,62 +14,92 @@ export async function POST(req: NextRequest) {
 
         if (type === 'submission') {
             html = `
-                <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-                    <div style="text-align: center; margin-bottom: 32px;">
-                        <h1 style="color: #1a1a2e; font-size: 24px; margin: 0;">Cambridge Tutor Programme</h1>
-                        <p style="color: #6b7280; font-size: 14px;">Jianshan Academy × CAMCapy</p>
-                    </div>
-                    <div style="background: #f8fafc; border-radius: 12px; padding: 32px; margin-bottom: 24px;">
-                        <h2 style="color: #1a1a2e; font-size: 20px; margin-top: 0;">Application Received</h2>
-                        <p style="color: #374151; line-height: 1.6;">Dear ${name || 'Applicant'},</p>
-                        <p style="color: #374151; line-height: 1.6;">
-                            Thank you for submitting your application to the Cambridge Academic Mentoring Programme.
-                            We have received your application and our team will review it shortly.
-                        </p>
-                        <p style="color: #374151; line-height: 1.6;">
-                            You can check the status of your application at any time by logging into your portal account.
-                        </p>
-                        <p style="color: #374151; line-height: 1.6;">
-                            We aim to respond within 15 working days.
-                        </p>
-                    </div>
-                    <div style="text-align: center; color: #9ca3af; font-size: 12px;">
-                        <p>Cambridge Tutor Programme | Jianshan Academy</p>
-                    </div>
-                </div>
-            `;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
+    <title>Application Received</title>
+</head>
+<body style="margin: 0; padding: 20px; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;">
+<div style="width: 100%; max-width: 600px; background-color: #ffffff; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);">
+    <div style="background-color: #1f495b; background-image: linear-gradient(#1f495b, #1f495b); padding: 30px 0; text-align: center; border-bottom: 6px solid #E1B168;">
+        <img src="https://i.postimg.cc/kGpxBnh7/Email-Logo.png" alt="Jianshan Academy" width="200" style="display: inline-block; max-width: 300px; height: auto; border: 0; outline: none; text-decoration: none; vertical-align: bottom;" />
+    </div>
+    <div style="padding: 40px 32px;">
+        <div style="margin-bottom: 24px; text-align: left;">
+            <span style="vertical-align: text-bottom; display: inline-block; padding: 6px 24px 6px 16px; border-radius: 9999px; background-color: #fff8eb; color: #E1B168; border: 1px solid #faeace; font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+                <img src="https://i.postimg.cc/CMGdvCGQ/bell-ring.png" width="15" height="15" alt="notification" style="width: 15px; height: 15px; vertical-align: text-bottom; margin-right: 6px; border: 0; outline: none; display: inline-block;" />APPLICATION RECEIVED
+            </span>
+        </div>
+        <h2 style="font-size: 24px; font-weight: bold; color: #111827; line-height: 1.4; margin-bottom: 24px; text-align: left; font-family: 'Lexend', sans-serif;">已收到您的见山夏令营申请</h2>
+        <div style="color: #4b5563; font-size: 16px; line-height: 1.8;">
+            <p style="margin-bottom: 16px;">亲爱的${name || '同学'}：</p>
+            <p style="margin-bottom: 16px;">我们已收到您的见山夏令营申请，感谢您在申请中的用心与投入！</p>
+            <p style="margin-bottom: 16px;">接下来，您的申请将由见山学院与剑桥大学CAMCapy社团的学长学姐组成的联合招生委员会进行认真细致的审核。每一份申请，我们都会悉心阅读。</p>
+            <p style="margin-bottom: 16px;">审核结果将在 <strong>15 个工作日</strong>内通过邮件通知，届时您也可以登录申请门户查看详情。</p>
+            <p>期待这个夏天与您相见！</p>
+        </div>
+        <div style="margin-top: 40px; margin-bottom: 32px; padding: 30px 0; border-top: 1px dashed #e5e7eb; border-bottom: 1px dashed #e5e7eb; text-align: center;">
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 15px; margin-top: 0px">请留意邮件通知或登录查看进度</p>
+            <a href="https://jianshanacademy.cn" style="display: inline-block; background-color: #1f495b; background-image: linear-gradient(#1f495b, #1f495b); color: white; font-weight: bold; padding: 14px 36px; border-radius: 6px; text-decoration: none; box-shadow: 0 4px 6px -1px rgba(31, 73, 91, 0.3);">登录申请门户</a>
+        </div>
+        <div style="text-align: center; font-size: 13px; color: #6b7280;">
+            <p>如有任何疑问，请联系 <a style="color: #1f495b; text-decoration: underline;" href="https://work.weixin.qq.com/kfid/kfcab82111f455c08bc">见山学院小助手</a>。</p>
+        </div>
+    </div>
+    <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #f3f4f6;">
+        <p style="margin: 0; font-size: 12px; color: #9ca3af;">© 2026 Jianshan Academy. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>
+`;
         } else if (type === 'decision') {
-            const statusMap: Record<string, { title: string; message: string }> = {
-                accepted: {
-                    title: '🎉 Congratulations!',
-                    message: 'We are delighted to inform you that your application has been accepted! Please log into your portal to view the details and confirm your participation.',
-                },
-                rejected: {
-                    title: 'Application Update',
-                    message: 'After careful consideration, we regret to inform you that we are unable to offer you a position this time. We encourage you to apply again in the future.',
-                },
-                waitlisted: {
-                    title: 'Waitlisted',
-                    message: 'Your application has been placed on our waitlist. We will notify you if a position becomes available. Thank you for your patience.',
-                },
-            };
-            const status = statusMap[decision || ''] || statusMap.rejected;
             html = `
-                <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-                    <div style="text-align: center; margin-bottom: 32px;">
-                        <h1 style="color: #1a1a2e; font-size: 24px; margin: 0;">Cambridge Tutor Programme</h1>
-                        <p style="color: #6b7280; font-size: 14px;">Jianshan Academy × CAMCapy</p>
-                    </div>
-                    <div style="background: #f8fafc; border-radius: 12px; padding: 32px; margin-bottom: 24px;">
-                        <h2 style="color: #1a1a2e; font-size: 20px; margin-top: 0;">${status.title}</h2>
-                        <p style="color: #374151; line-height: 1.6;">Dear ${name || 'Applicant'},</p>
-                        <p style="color: #374151; line-height: 1.6;">${status.message}</p>
-                    </div>
-                    <div style="text-align: center; color: #9ca3af; font-size: 12px;">
-                        <p>Cambridge Tutor Programme | Jianshan Academy</p>
-                    </div>
-                </div>
-            `;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
+    <title>Application Result</title>
+</head>
+<body style="margin: 0; padding: 20px; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;">
+<div style="width: 100%; max-width: 600px; background-color: #ffffff; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);">
+    <div style="background-color: #1f495b; background-image: linear-gradient(#1f495b, #1f495b); padding: 30px 0; text-align: center; border-bottom: 6px solid #E1B168;">
+        <img src="https://i.postimg.cc/kGpxBnh7/Email-Logo.png" alt="Jianshan Academy" width="200" style="display: inline-block; max-width: 300px; height: auto; border: 0; outline: none; text-decoration: none; vertical-align: bottom;" />
+    </div>
+    <div style="padding: 40px 32px;">
+        <div style="margin-bottom: 24px; text-align: left;">
+            <span style="vertical-align: text-bottom; display: inline-block; padding: 6px 16px; border-radius: 9999px; background-color: #fff8eb; color: #E1B168; border: 1px solid #faeace; font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+                <img src="https://i.postimg.cc/CMGdvCGQ/bell-ring.png" width="15" height="15" alt="notification" style="width: 15px; height: 15px; vertical-align: text-bottom; margin-right: 6px; border: 0; outline: none; display: inline-block;" />NEW NOTIFICATION
+            </span>
+        </div>
+        <h2 style="font-size: 24px; font-weight: bold; color: #111827; line-height: 1.4; margin-bottom: 24px; text-align: left; font-family: 'Lexend', sans-serif;">您的见山夏令营申请结果已出</h2>
+        <div style="color: #4b5563; font-size: 16px; line-height: 1.8;">
+            <p style="margin-bottom: 16px;">亲爱的${name || '同学'}：</p>
+            <p style="margin-bottom: 16px;">见山夏令营招生委员会已完成对您的申请审核，录取结果现已正式公布。</p>
+            <p>感谢您对见山夏令营的关注与支持！无论结果如何，我们都对您在申请过程中付出的努力表示由衷的感谢。请点击下方按钮登录申请门户，查阅您的详细录取结果及后续指引。</p>
+        </div>
+        <div style="margin-top: 40px; margin-bottom: 32px; padding: 30px 0; border-top: 1px dashed #e5e7eb; border-bottom: 1px dashed #e5e7eb; text-align: center;">
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px; margin-top: 0px">请于收到本通知后 48 小时内登录查看</p>
+            <a href="https://jianshanacademy.cn" style="display: inline-block; background-color: #1f495b; background-image: linear-gradient(#1f495b, #1f495b); color: white; font-weight: bold; padding: 14px 36px; border-radius: 6px; text-decoration: none; box-shadow: 0 4px 6px -1px rgba(31, 73, 91, 0.3);">登录门户查看结果</a>
+        </div>
+        <div style="text-align: center; font-size: 13px; color: #6b7280;">
+            <p>如有任何登录问题，请联系 <a style="color: #1f495b; text-decoration: underline;" href="https://work.weixin.qq.com/kfid/kfcab82111f455c08bc">见山学院小助手</a>。</p>
+        </div>
+    </div>
+    <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #f3f4f6;">
+        <p style="margin: 0; font-size: 12px; color: #9ca3af;">© 2026 Jianshan Academy. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>
+`;
         }
 
         const { data, error } = await resend.emails.send({
