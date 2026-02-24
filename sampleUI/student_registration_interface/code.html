@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Jianshan Summer Camp - Student Registration</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        // Original: "primary": "#13ec5b",
+                        "primary": "#E1B168", // Accent color
+                        "secondary-dark": "#1F495B", // Theme color
+                        "background-light": "#f8f8f8", // Slightly lighter background for contrast
+                        "background-dark": "#1c2e39", // Dark mode background from theme color family
+                        "text-light": "#1F495B", // Theme color for main text
+                        "text-dark": "#f0f0f0", // Light text for dark mode
+                        "muted-light": "#587884", // Muted text for light mode
+                        "muted-dark": "#a2c1d0", // Muted text for dark mode
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark font-display min-h-screen flex flex-col overflow-x-hidden">
+<header class="w-full border-b border-[#e5e7eb] dark:border-[#2a3c48] bg-white dark:bg-[#1a2d39]">
+<div class="px-4 md:px-10 py-3 max-w-[1440px] mx-auto flex items-center justify-between">
+<div class="flex items-center gap-4 text-text-light dark:text-text-dark">
+<div class="size-8 text-primary">
+<svg class="w-full h-full" fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z"></path>
+</svg>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em] hidden sm:block">Jianshan Summer Camp</h2>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-sm text-muted-light dark:text-muted-dark hidden sm:block">Already have an account?</span>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-secondary-dark hover:bg-secondary-dark/90 transition-colors text-white text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Log in</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col md:flex-row w-full max-w-[1440px] mx-auto">
+<div class="hidden md:flex flex-col justify-between w-full md:w-6/12 lg:w-7/12 p-6 lg:p-10 sticky top-0 h-[calc(100vh-65px)]">
+<div class="h-full w-full rounded-2xl overflow-hidden relative group">
+<img alt="Students studying outdoors in a summer camp environment" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Students gathered around a table outdoors studying" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABx36VECA-_Kl_B4ms9OXRMx-qLQsl5TWKE68tN44oZTHAmG5zIC7Be7Dz9i01jjsNpx3nFcWQEZWHLot8N_ypSZkhHkI9UXOveAsBvS8L7--mg-_YnZD9YMhX94K8S4XBjXwYPj3DCwOb6L3jMzTTxnBoBhrjJXo0Dmrlmlba1mc5LWQeLdbeCuPv6hYJT0TeUsDvda470mVwZUr-zqKCy_3KvcQZDTzGw8VSU1-C4lxBaP7iG9J-KQ3nWXMKm6NhuFC1Me6oJYbB"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-8 lg:p-12">
+<blockquote class="text-white mb-4">
+<p class="text-2xl lg:text-3xl font-bold leading-tight mb-4">"The best summer of my life. I learned so much and made friends from all over the world."</p>
+<footer class="text-white/80 font-medium text-lg">— Sarah Chen, Alumni '23</footer>
+</blockquote>
+</div>
+</div>
+</div>
+<div class="w-full md:w-6/12 lg:w-5/12 flex flex-col justify-center px-4 py-8 md:p-10 lg:p-20 bg-background-light dark:bg-background-dark">
+<div class="max-w-[480px] w-full mx-auto">
+<div class="mb-10">
+<h1 class="text-text-light dark:text-text-dark text-4xl font-black leading-tight tracking-[-0.033em] mb-3">Your Summer Adventure Starts Here!</h1>
+<p class="text-muted-light dark:text-muted-dark text-base font-normal leading-normal">Sign up and get ready for an unforgettable experience!</p>
+</div>
+<form action="#" class="flex flex-col gap-6" method="POST">
+<label class="flex flex-col w-full">
+<p class="text-text-light dark:text-gray-200 text-base font-medium leading-normal pb-2">Username</p>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#dbe6df] dark:border-[#2a4032] bg-white dark:bg-[#1a2e22] focus:border-primary h-14 placeholder:text-muted-light dark:placeholder:text-muted-dark p-[15px] text-base font-normal leading-normal transition-all" placeholder="Enter your preferred username" type="text"/>
+</label>
+<label class="flex flex-col w-full">
+<p class="text-text-light dark:text-gray-200 text-base font-medium leading-normal pb-2">Email Address</p>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#dbe6df] dark:border-[#2a4032] bg-white dark:bg-[#1a2e22] focus:border-primary h-14 placeholder:text-muted-light dark:placeholder:text-muted-dark p-[15px] text-base font-normal leading-normal transition-all" placeholder="student@example.com" type="email"/>
+</label>
+<label class="flex flex-col w-full">
+<p class="text-text-light dark:text-gray-200 text-base font-medium leading-normal pb-2">Password</p>
+<div class="relative flex w-full items-center">
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#dbe6df] dark:border-[#2a4032] bg-white dark:bg-[#1a2e22] focus:border-primary h-14 placeholder:text-muted-light dark:placeholder:text-muted-dark p-[15px] pr-12 text-base font-normal leading-normal transition-all" placeholder="At least 8 characters" type="password"/>
+<button class="absolute right-0 h-full px-4 text-muted-light hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center justify-center" type="button">
+<span class="material-symbols-outlined text-[24px]">visibility</span>
+</button>
+</div>
+</label>
+<label class="flex flex-col w-full">
+<p class="text-text-light dark:text-gray-200 text-base font-medium leading-normal pb-2">Confirm Password</p>
+<div class="relative flex w-full items-center">
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#dbe6df] dark:border-[#2a4032] bg-white dark:bg-[#1a2e22] focus:border-primary h-14 placeholder:text-muted-light dark:placeholder:text-muted-dark p-[15px] pr-12 text-base font-normal leading-normal transition-all" placeholder="Re-enter your password" type="password"/>
+<button class="absolute right-0 h-full px-4 text-muted-light hover:text-text-light dark:hover:text-text-dark transition-colors flex items-center justify-center" type="button">
+<span class="material-symbols-outlined text-[24px]">visibility_off</span>
+</button>
+</div>
+</label>
+<div class="flex items-start gap-3 mt-2">
+<div class="flex h-6 items-center">
+<input class="h-5 w-5 rounded border-[#dbe6df] text-primary focus:ring-primary/50 bg-white dark:bg-[#1a2e22] dark:border-[#2a4032]" id="terms" name="terms" type="checkbox"/>
+</div>
+<label class="text-sm font-medium leading-6 text-muted-light dark:text-muted-dark" for="terms">
+                            I agree to the <a class="font-bold text-text-light dark:text-text-dark hover:text-primary underline decoration-2 decoration-primary/30 hover:decoration-primary underline-offset-2 transition-all" href="#">Terms of Service</a> and <a class="font-bold text-text-light dark:text-text-dark hover:text-primary underline decoration-2 decoration-primary/30 hover:decoration-primary underline-offset-2 transition-all" href="#">Privacy Policy</a>.
+                        </label>
+</div>
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 px-4 bg-primary hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 transition-all text-secondary-dark text-base font-bold leading-normal tracking-[0.015em] mt-4">
+<span class="truncate">Create Account</span>
+</button>
+<div class="mt-6 text-center md:hidden">
+<p class="text-muted-light dark:text-muted-dark text-sm">
+                            Already have an account? 
+                            <a class="font-bold text-text-light dark:text-text-dark hover:text-primary transition-colors" href="#">Log in</a>
+</p>
+</div>
+</form>
+</div>
+</div>
+</main>
+
+</body></html>

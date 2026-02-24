@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Jianshan Summer Camp - Application Results Available</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1F495B",
+                        "accent": "#E1B168",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#0B1215",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white min-h-screen flex flex-col antialiased selection:bg-accent/30">
+<header class="sticky top-0 z-50 w-full bg-white dark:bg-[#111c21] border-b border-[#f0f4f2] dark:border-slate-800">
+<div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex items-center justify-between h-16">
+<div class="flex items-center gap-3 text-slate-900 dark:text-white">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">camping</span>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Jianshan Summer Camp</h2>
+</div>
+<div class="hidden md:flex flex-1 justify-end items-center gap-8">
+<nav class="flex items-center gap-6">
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-accent text-sm font-medium transition-colors" href="#">Home</a>
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-accent text-sm font-medium transition-colors" href="#">Help Center</a>
+<a class="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-accent text-sm font-medium transition-colors" href="#">Profile</a>
+</nav>
+<button class="flex items-center justify-center size-10 rounded-lg bg-[#f0f4f2] dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-slate-900 dark:text-white">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+</button>
+</div>
+<div class="flex md:hidden">
+<button class="text-slate-900 dark:text-white">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-grow w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+<div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div class="flex flex-col gap-2">
+<h1 class="text-3xl md:text-4xl font-black leading-tight tracking-tight text-slate-900 dark:text-white">
+                    Application Status
+                </h1>
+<p class="text-slate-500 dark:text-slate-400 text-base md:text-lg">
+                    Track the progress of your summer camp application below.
+                </p>
+</div>
+<button class="w-fit px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">help</span>
+                Need Help?
+            </button>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<div class="lg:col-span-8 flex flex-col gap-8">
+<div class="bg-white dark:bg-[#111c21] rounded-xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 relative overflow-hidden group">
+<div class="absolute -right-10 -top-10 size-40 bg-accent/10 rounded-full blur-3xl group-hover:bg-accent/20 transition-all duration-700"></div>
+<div class="relative z-10 flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center justify-center px-3 py-1 rounded-full bg-accent text-primary text-xs font-bold uppercase tracking-wider">
+                                Action Required
+                            </span>
+<span class="text-slate-400 dark:text-slate-500 text-sm">Updated just now</span>
+</div>
+<h2 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight max-w-2xl">
+                            Application Results Available
+                        </h2>
+<p class="text-slate-600 dark:text-slate-300 text-base leading-relaxed max-w-2xl">
+                            The admissions team has completed the review of your application. Please click the button below to view your result.
+                        </p>
+<div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/50 flex flex-col sm:flex-row gap-4">
+<button class="bg-primary hover:bg-[#163a4a] text-white px-6 py-3 rounded-lg font-bold shadow-md shadow-primary/20 transition-all flex items-center justify-center gap-2 group">
+                                查看申请结果
+                                <span class="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-[#111c21] rounded-xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6">Progress Timeline</h3>
+<div class="grid grid-cols-[40px_1fr] gap-x-4">
+<div class="flex flex-col items-center gap-1 pt-1">
+<div class="size-8 rounded-full bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[20px]">check</span>
+</div>
+<div class="w-[2px] bg-primary h-full min-h-[40px]"></div>
+</div>
+<div class="flex flex-col pb-8">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-normal">Registration</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Completed on May 10, 2024</p>
+</div>
+<div class="flex flex-col items-center gap-1">
+<div class="w-[2px] bg-primary h-2"></div>
+<div class="size-8 rounded-full bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[20px]">check</span>
+</div>
+<div class="w-[2px] bg-primary h-full min-h-[40px]"></div>
+</div>
+<div class="flex flex-col pb-8 pt-1">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-normal">Application Submitted</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Submitted on June 12, 2024</p>
+</div>
+<div class="flex flex-col items-center gap-1">
+<div class="w-[2px] bg-primary h-2"></div>
+<div class="size-8 rounded-full bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[20px]">check</span>
+</div>
+<div class="w-[2px] bg-primary h-full min-h-[40px]"></div>
+</div>
+<div class="flex flex-col pb-8 pt-1">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-normal">Under Review</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Review completed</p>
+</div>
+<div class="flex flex-col items-center gap-1 pb-1">
+<div class="w-[2px] bg-primary h-2"></div>
+<div class="size-8 rounded-full border-[3px] border-accent bg-white dark:bg-[#111c21] flex items-center justify-center relative z-10 shadow-[0_0_15px_rgba(225,177,104,0.4)]">
+<div class="size-2.5 bg-accent rounded-full animate-pulse"></div>
+</div>
+</div>
+<div class="flex flex-col pt-1">
+<p class="text-primary dark:text-accent text-base font-bold leading-normal">Final Decision</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Ready to view</p>
+</div>
+</div>
+</div>
+</div>
+<div class="lg:col-span-4 flex flex-col gap-6">
+<div class="bg-white dark:bg-[#111c21] rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+<div class="p-4 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/20">
+<h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Details</h3>
+</div>
+<div class="p-5 flex flex-col gap-4">
+<div class="grid grid-cols-[24px_1fr] gap-3 items-start">
+<span class="material-symbols-outlined text-slate-400 text-[20px] mt-0.5">person</span>
+<div>
+<p class="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold">Applicant Name</p>
+<p class="text-sm text-slate-900 dark:text-white font-medium">Alex Chen</p>
+</div>
+</div>
+<div class="h-px bg-slate-100 dark:bg-slate-700/50 w-full"></div>
+<div class="grid grid-cols-[24px_1fr] gap-3 items-start">
+<span class="material-symbols-outlined text-slate-400 text-[20px] mt-0.5">badge</span>
+<div>
+<p class="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold">Application ID</p>
+<p class="text-sm text-slate-900 dark:text-white font-medium">#829102</p>
+</div>
+</div>
+<div class="h-px bg-slate-100 dark:bg-slate-700/50 w-full"></div>
+<div class="grid grid-cols-[24px_1fr] gap-3 items-start">
+<span class="material-symbols-outlined text-slate-400 text-[20px] mt-0.5">terminal</span>
+<div>
+<p class="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold">Program Track</p>
+<p class="text-sm text-slate-900 dark:text-white font-medium">Computer Science</p>
+</div>
+</div>
+<div class="h-px bg-slate-100 dark:bg-slate-700/50 w-full"></div>
+<div class="grid grid-cols-[24px_1fr] gap-3 items-start">
+<span class="material-symbols-outlined text-slate-400 text-[20px] mt-0.5">calendar_today</span>
+<div>
+<p class="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold">Submission Date</p>
+<p class="text-sm text-slate-900 dark:text-white font-medium">June 12, 2024</p>
+</div>
+</div>
+</div>
+<div class="p-4 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-700/50">
+<button class="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-white text-sm font-bold py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition shadow-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+                             View Full Application
+                        </button>
+</div>
+</div>
+<div class="bg-primary rounded-xl p-6 text-white relative overflow-hidden">
+<div class="relative z-10">
+<h3 class="font-bold text-lg mb-2">Have questions?</h3>
+<p class="text-sm text-white/80 mb-4 opacity-90">If you have any issues with your application status, please reach out to our admissions team.</p>
+<a class="inline-flex items-center gap-2 text-sm font-bold bg-accent hover:bg-white text-slate-900 py-2 px-4 rounded-lg transition-colors shadow-sm" href="mailto:admissions@jianshan.com">
+<span class="material-symbols-outlined text-[18px]">mail</span>
+                            Email Admissions
+                        </a>
+</div>
+<div class="absolute -right-6 -bottom-10 opacity-10 rotate-12 text-white">
+<span class="material-symbols-outlined text-[120px]">mark_email_unread</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111c21] py-8">
+<div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="flex items-center gap-2">
+<div class="size-6 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-slate-500 dark:text-slate-300">
+<span class="material-symbols-outlined text-[16px]">camping</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">© 2024 Jianshan Summer Camp</p>
+</div>
+<div class="flex gap-6">
+<a class="text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-accent text-sm font-medium transition-colors" href="#">Privacy Policy</a>
+<a class="text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-accent text-sm font-medium transition-colors" href="#">Terms of Service</a>
+<a class="text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-accent text-sm font-medium transition-colors" href="#">Contact Support</a>
+</div>
+</div>
+</footer>
+</body></html>

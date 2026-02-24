@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Student Login - Jianshan Application Portal</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#1F495B", // Primary Theme Color (Deep Teal/Blue)
+            "accent": "#E1B168",  // Accent Color (Gold)
+            "accent-hover": "#c99e5b",
+            "background-light": "#F8FAFC",
+            "background-dark": "#0F242D",
+            "surface-dark": "#163340",
+            "text-muted": "#64748B",
+            "border-color": "#E2E8F0"
+          },
+          fontFamily: {
+            "display": ["Plus Jakarta Sans", "Noto Sans", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem", 
+            "lg": "0.5rem", 
+            "xl": "0.75rem", 
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      border-radius: 20px;
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-primary dark:text-gray-100 overflow-hidden">
+<div class="flex min-h-screen w-full flex-row">
+<div class="hidden lg:flex lg:w-2/3 relative flex-col justify-end p-12 xl:p-20 overflow-hidden bg-primary group/design-root">
+<div class="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105" data-alt="Group of energetic students smiling and collaborating outdoors at Jianshan Summer Camp" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCfNWP0JwrlodGUVOhgBcerYgpmWEexPBJTMNIqPFGp8BI-GFgOdTf0dTX-wsF_SApimdrAedCFMOjdPi--C-AdvDmMFU3resmz_XEbbMP_2Vd51nZVgQLNIW4VHVtcsI8g5XXa-lch7i2PTYu6dIwdiTUQ665PRM6KE61m_8OsSWlE_9jVtcqvwbWYDU9ZzQVjIbkWNZNdCVCBnsx0mjqGyp739PwV3a_WohUN6-P-6BufJU0Gsgv3CQTMGOtzUVc1L_IjyWL7Gfkz');"></div>
+<div class="absolute inset-0 z-0 bg-gradient-to-t from-primary/95 via-primary/50 to-transparent"></div>
+<div class="relative z-10 max-w-3xl animate-fade-in-up">
+<div class="mb-6 flex items-center gap-2">
+<span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-accent text-primary">
+<span class="material-symbols-outlined text-lg">school</span>
+</span>
+<span class="text-accent font-bold tracking-wider uppercase text-sm">Jianshan Summer Camp 2024</span>
+</div>
+<h1 class="text-white text-5xl xl:text-7xl font-black leading-tight tracking-[-0.033em] mb-4 drop-shadow-sm">
+          Discover Your <br/>
+<span class="text-transparent bg-clip-text bg-gradient-to-r from-accent to-yellow-100">Potential</span> at Jianshan
+        </h1>
+<h2 class="text-gray-200 text-lg xl:text-xl font-normal leading-relaxed max-w-xl">
+          Join a community of ambitious learners. Embark on a summer of growth, friendship, and unforgettable memories.
+        </h2>
+<div class="mt-10 flex gap-4">
+<div class="flex -space-x-3 overflow-hidden">
+<img alt="Student avatar" class="inline-block h-10 w-10 rounded-full ring-2 ring-white dark:ring-gray-800 object-cover" data-alt="Portrait of a female student" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtOHYb_g6gL1_sLLr4UiKe-A9ZeeIUYpSp1INOqLeRFRvBYXj9jX-X_nZVpE_92ZF7chaNHVNangGAZUgE5lKAJk8qsPcHu46eOQFBYd2HgU_lpwe7by9k2SUmnHyJuu-uJCu9xIweLNMlvNwD_098lpmA6LvPmhRxsT3OJanriRVhZVbNOAx0QLiWQDuf6YctjxjP6iWaEGwGBfjI9f5cF1bnnQDDVv0ztqD8tvK-v91I-PoCh6ZljRMr9xaSPkYpebDYJ6WDmavN"/>
+<img alt="Student avatar" class="inline-block h-10 w-10 rounded-full ring-2 ring-white dark:ring-gray-800 object-cover" data-alt="Portrait of a male student" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCl8KmS5mparhfSSpWq9GabNoj1ioWohnKRRBzoYb_urc6s1p76zENeH8dpJCOZ1i0gAx9h1gyMy-fNXi5YWdsja6QYZ4SLKlboGdgKS7syQtE1xj4b7ghV5mjrhsdKBFiss3JEYd0cyrvUJGy0z63uaYuwXzXUz05jUgc_Qs0G13vkiW8hVvx1KnGYxSN-CJ6ztCaySMy99n88dLBqJtZ0GhHpCWHVg4toi1hfjL_90jDmvrdiC2gYEXY2hyUU9tlAB4Da-jLWfOvn"/>
+<img alt="Student avatar" class="inline-block h-10 w-10 rounded-full ring-2 ring-white dark:ring-gray-800 object-cover" data-alt="Portrait of a smiling student" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEaLswwN_MGw2W5tIaC-S3LS9AKCgSsFXmLfQEdaSXivlKoHXJXBb17YuOWhBwrfrCgU7_i8CKLcV77qlBWUxHpWCENYh6qJ92r992mKeU_QzxXd7COUfgwRAXStdYi1N6D_mQ2Ebtajil2rgyCKtAmobWaXRVibUbFAxiWF5z-VdPIcMlqVpP7z3tlKFYNy1mmU8IAH5ESm42QXDCAMlNBkMNdYpHHqLCjlSY9kFnPPMV0aRMxhC7egI4dvndvsTSN8AWpn44huri"/>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-white text-xs font-bold">500+ Students</p>
+<p class="text-gray-300 text-xs">Joined last year</p>
+</div>
+</div>
+</div>
+</div>
+<div class="flex w-full lg:w-1/3 flex-col relative bg-white dark:bg-background-dark overflow-y-auto h-screen shadow-2xl z-20">
+<div class="lg:hidden h-48 w-full bg-cover bg-center relative shrink-0" data-alt="Jianshan Summer Camp students" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBJQZ6JfR5KlW8qbAlOUoLfg3HO2g1jQMh4YIfylZB7cP_uhrU988A9iaT_ClPv8wVKfxBArQbqo3SkTw_NeJ47rr0N8MVkNqgoYHqDykhQFm3wx6lWhE5jyThL7uSG1iUvZZefi7_hWeb15yDbcID-OlrwZjTSw2D_jJuQ-8FvopWS8LkprbRigcCKxirGoJ9ZVwORiGdUx8olaeoU5hAtwRnVvfSpGCn2m_A_7LZfDYY_0se9BTGW8YpZEBcZg0Q11LFZOMdn-OYS');">
+<div class="absolute inset-0 bg-gradient-to-t from-background-light dark:from-background-dark to-transparent"></div>
+<div class="absolute bottom-4 left-6 text-white">
+<h1 class="font-bold text-2xl text-primary dark:text-white">Jianshan Camp</h1>
+</div>
+</div>
+<div class="flex-1 flex flex-col justify-center px-6 sm:px-12 py-10 pt-20 lg:pt-32">
+<div class="w-full max-w-[400px] mx-auto flex flex-col gap-8">
+<div class="flex flex-col gap-2">
+<p class="text-primary dark:text-white tracking-tight text-[32px] font-bold leading-tight">Student Login</p>
+<p class="text-text-muted dark:text-gray-400 text-sm font-normal leading-normal">Welcome to Jianshan Application Portal. Please enter your details below.</p>
+</div>
+<form class="flex flex-col gap-5">
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-primary dark:text-gray-200" for="username">
+                Username or Email
+              </label>
+<div class="relative">
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-primary dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/20 border border-border-color dark:border-white/10 bg-white dark:bg-surface-dark focus:border-primary h-12 pl-11 pr-4 text-base font-normal leading-normal placeholder:text-text-muted dark:placeholder:text-gray-500 transition-all" id="username" placeholder="Enter your username" type="text" value=""/>
+<div class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted dark:text-gray-400 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-[20px]">person</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<label class="text-sm font-semibold text-primary dark:text-gray-200" for="password">
+                  Password
+                </label>
+<a class="text-xs font-semibold text-text-muted hover:text-accent dark:text-gray-400 dark:hover:text-accent transition-colors" href="#">
+                  Forgot Password?
+                </a>
+</div>
+<div class="relative">
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-primary dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/20 border border-border-color dark:border-white/10 bg-white dark:bg-surface-dark focus:border-primary h-12 pl-11 pr-4 text-base font-normal leading-normal placeholder:text-text-muted dark:placeholder:text-gray-500 transition-all" id="password" placeholder="Enter your password" type="password" value=""/>
+<div class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted dark:text-gray-400 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-[20px]">lock</span>
+</div>
+</div>
+</div>
+<button class="mt-2 flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-primary/5 hover:bg-primary/10 dark:bg-white/5 dark:hover:bg-white/10 text-primary dark:text-white text-base font-bold leading-normal tracking-[0.015em] transition-colors" type="button">
+<span class="truncate">Log In</span>
+</button>
+</form>
+<div class="relative flex py-2 items-center">
+<div class="flex-grow border-t border-border-color dark:border-white/10"></div>
+<span class="flex-shrink-0 mx-4 text-text-muted dark:text-gray-500 text-xs uppercase font-semibold tracking-wider">Or continue with</span>
+<div class="flex-grow border-t border-border-color dark:border-white/10"></div>
+</div>
+<button class="flex w-full cursor-pointer items-center justify-center gap-3 rounded-lg h-14 px-5 bg-[#07C160] hover:bg-[#06ad56] text-white text-base font-bold transition-all group shadow-md hover:shadow-lg" type="button">
+<span class="material-symbols-outlined text-white text-2xl group-hover:scale-110 transition-transform">chat_bubble</span>
+<span>Log In with WeChat</span>
+</button>
+<div class="mt-4 text-center">
+<p class="text-sm text-text-muted dark:text-gray-400">
+              Don't have an account yet? 
+              <a class="text-primary dark:text-white font-bold hover:text-accent dark:hover:text-accent underline decoration-2 decoration-accent/30 hover:decoration-accent transition-all" href="#">
+                Apply Now
+              </a>
+</p>
+</div>
+</div>
+<div class="mt-auto pt-10 text-center pb-8">
+<p class="text-xs text-text-muted/60 dark:text-gray-600">
+             © 2024 Jianshan Education. All rights reserved.
+           </p>
+</div>
+</div>
+</div>
+</div>
+</body></html>
