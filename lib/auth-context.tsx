@@ -21,9 +21,9 @@ interface AuthContextType {
     user: User;
     loading: boolean;
     isAdmin: boolean;
-    login: (email: string, password: string) => Promise<void>;
-    register: (email: string, password: string, displayName?: string) => Promise<void>;
-    loginWithGoogle: () => Promise<void>;
+    login: (email: string, password: string) => Promise<any>;
+    register: (email: string, password: string, displayName?: string) => Promise<any>;
+    loginWithGoogle: () => Promise<any>;
     logout: () => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
 }
@@ -57,7 +57,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const login = async (email: string, password: string) => {
         setLoading(true);
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const result = await signInWithEmailAndPassword(auth, email, password);
+            return result;
         } catch (error) {
             console.error("Login failed:", error);
             throw error;
@@ -73,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (displayName) {
                 await updateProfile(result.user, { displayName });
             }
+            return result;
         } catch (error) {
             console.error("Registration failed:", error);
             throw error;
@@ -84,7 +86,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const loginWithGoogle = async () => {
         setLoading(true);
         try {
-            await signInWithPopup(auth, googleProvider);
+            const result = await signInWithPopup(auth, googleProvider);
+            return result;
         } catch (error) {
             console.error("Google login failed:", error);
             throw error;

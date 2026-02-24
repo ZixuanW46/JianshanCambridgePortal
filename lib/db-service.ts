@@ -330,4 +330,24 @@ export const dbService = {
             submittedAt: deleteField(),
         });
     },
+
+    // Applicant: Confirm Enrollment (accepted → enrolled)
+    async confirmEnrollment(userId: string) {
+        const timestamp = new Date().toISOString();
+        const docRef = doc(db, COLLECTION, userId);
+        await updateDoc(docRef, {
+            status: 'enrolled',
+            lastUpdatedAt: timestamp,
+        });
+    },
+
+    // Admin: Progress application to under_review
+    async progressApplication(userId: string) {
+        const timestamp = new Date().toISOString();
+        const docRef = doc(db, COLLECTION, userId);
+        await updateDoc(docRef, {
+            status: 'under_review',
+            lastUpdatedAt: timestamp,
+        });
+    },
 };

@@ -1,104 +1,84 @@
 "use client"
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { ArrowRight, CheckCircle, FileText } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { dbService } from "@/lib/db-service";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
-import { PROGRAMME_INFO } from "@/lib/constants";
+import { Application } from "@/lib/types";
 
 export default function WelcomePage() {
-    const { user, loading: authLoading } = useAuth();
-    const router = useRouter();
-    const [creating, setCreating] = useState(false);
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const { user } = useAuth();
+    const [application, setApplication] = useState<Application | null>(null);
+    const [loadingApp, setLoadingApp] = useState(true);
 
     useEffect(() => {
-        if (!authLoading && !user) {
-            router.push('/login');
-        }
-    }, [user, authLoading, router]);
+        const img = new Image();
+        img.src = '/images/welcome-bg.webp';
+        img.onload = () => setImageLoaded(true);
+    }, []);
 
-    const handleGetStarted = async () => {
-        if (!user) return;
-        setCreating(true);
-        try {
-            // Check if application already exists
-            const existing = await dbService.getMyApplication(user.uid);
-            if (existing) {
-                router.push('/dashboard');
-                return;
+    useEffect(() => {
+        const fetchApp = async () => {
+            if (user?.uid) {
+                try {
+                    const app = await dbService.getMyApplication(user.uid);
+                    setApplication(app);
+                } catch (error) {
+                    console.error("Failed to fetch application:", error);
+                } finally {
+                    setLoadingApp(false);
+                }
             }
-            // Create new application
-            await dbService.createApplication(user.uid, user.email || undefined);
-            router.push('/apply');
-        } catch (err) {
-            console.error("Failed to create application:", err);
-            // If it already exists, just go to dashboard
-            router.push('/dashboard');
-        } finally {
-            setCreating(false);
-        }
-    };
-
-    if (authLoading) {
-        return (
-            <div className="flex-1 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-            </div>
-        );
-    }
+        };
+        fetchApp();
+    }, [user]);
 
     return (
-        <main className="flex-1 flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 py-12 px-4">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="max-w-lg w-full text-center"
-            >
-                <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-10">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                        <span className="text-2xl">🎓</span>
+        <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 py-16 animate-in fade-in zoom-in duration-500">
+            <div className="flex flex-col items-center bg-card rounded-xl p-8 md:p-12 shadow-sm border w-full max-w-[640px]">
+                {/* Illustration with fade-in loading */}
+                <div
+                    className="rounded-xl w-full aspect-[2/1] mb-8 relative overflow-hidden group border"
+                    style={{ backgroundColor: '#1f495b' }}
+                >
+                    <div
+                        className={`absolute inset-0 bg-center bg-no-repeat bg-cover transition-opacity duration-700 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                        style={{ backgroundImage: "url('/images/welcome-bg.webp')" }}
+                    />
+                    <div className="absolute inset-0 bg-primary/20 group-hover:bg-primary/10 transition-colors duration-500"></div>
+                </div>
+
+                <div className="flex flex-col items-center gap-4 text-center max-w-[480px]">
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider border border-primary/20">
+                        <CheckCircle className="h-4 w-4" />
+                        Registration Complete
                     </div>
-                    <h1 className="text-2xl font-bold text-slate-900 mb-3">
-                        Welcome, {user?.displayName?.split(' ')[0] || 'there'}!
+                    <h1 className="text-primary text-3xl md:text-4xl font-extrabold leading-tight tracking-tight mt-2">
+                        Welcome to Jianshan Academy
                     </h1>
-                    <p className="text-slate-600 mb-6 leading-relaxed">
-                        Thank you for your interest in the {PROGRAMME_INFO.name}.
-                        Let&apos;s get started with your tutor application.
+                    <p className="text-muted-foreground text-base md:text-lg font-normal leading-relaxed">
+                        Your account has been created successfully. Next, please complete your application form to finish the registration process. We look forward to having you!
                     </p>
 
-                    <div className="bg-blue-50 rounded-xl p-4 mb-8 text-left">
-                        <h3 className="font-medium text-blue-900 mb-2 text-sm">What you&apos;ll need:</h3>
-                        <ul className="text-sm text-blue-800 space-y-1.5">
-                            <li>• Your academic details (university, programme, year)</li>
-                            <li>• Subjects you&apos;re interested in teaching</li>
-                            <li>• A brief essay about your motivation</li>
-                            <li>• About 15 minutes of your time</li>
-                        </ul>
-                    </div>
+                    <div className="flex flex-col w-full gap-3 mt-8 items-center">
+                        <Link href="/faq" className="flex w-full max-w-[320px] items-center justify-center rounded-lg h-12 px-6 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium transition-colors">
+                            <FileText className="h-4 w-4 mr-2" />
+                            View Programme Details
+                        </Link>
 
-                    <Button
-                        onClick={handleGetStarted}
-                        disabled={creating}
-                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 py-6 text-base"
-                    >
-                        {creating ? (
-                            <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Setting up...
-                            </>
-                        ) : (
-                            <>
-                                Start Application
-                                <ArrowRight className="ml-2 w-5 h-5" />
-                            </>
-                        )}
-                    </Button>
+                        <Link href="/apply" className="group relative flex w-full max-w-[320px] items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-accent hover:bg-accent/90 text-primary text-base font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
+                            <span className="mr-2">Complete Application</span>
+                            <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                        </Link>
+
+                        <p className="text-xs text-muted-foreground mt-2">
+                            The application takes approximately 15–30 minutes to complete.
+                        </p>
+                    </div>
                 </div>
-            </motion.div>
-        </main>
+            </div>
+        </div>
     );
 }

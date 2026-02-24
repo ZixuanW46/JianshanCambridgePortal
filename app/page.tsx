@@ -2,190 +2,204 @@
 
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { useBackground } from "@/lib/use-background";
+
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Users, BookOpen, ArrowRight, Star, CheckCircle } from "lucide-react";
-import { motion } from "framer-motion";
-import { PROGRAMME_INFO, PROGRAMME_DATES } from "@/lib/constants";
+import { Mail, UserPlus, ChevronRight } from "lucide-react";
 
 export default function LandingPage() {
-  const { user, loading } = useAuth();
   const router = useRouter();
+  const { user, loading } = useAuth();
+  const { backgroundImage, isLoaded } = useBackground();
 
   useEffect(() => {
     if (!loading && user) {
-      router.push('/dashboard');
+      router.replace('/dashboard');
     }
   }, [user, loading, router]);
 
   return (
-    <main className="flex-1">
-      {/* Hero Section */}
-      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(59,130,246,0.15),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(99,102,241,0.1),transparent_50%)]" />
+    <div className="min-h-screen w-full bg-white lg:p-6 lg:flex lg:items-center lg:justify-center">
 
-        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 mb-8">
-              <Star className="w-4 h-4 text-amber-400" />
-              <span className="text-white/90 text-sm font-medium">Applications Now Open for Summer 2026</span>
+      {/* =======================
+                MOBILE LAYOUT (lg:hidden)
+               ======================= */}
+      <div className="lg:hidden flex flex-col w-full h-[100vh] overflow-hidden bg-white">
+
+        {/* Top "Poster" Section */}
+        <div className="relative h-[45vh] w-full bg-slate-900 shrink-0 overflow-hidden">
+          {/* Background Image */}
+          <div
+            className={`absolute inset-0 bg-cover transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+            style={{
+              backgroundImage: backgroundImage ? `url('${backgroundImage}')` : 'none',
+              backgroundPosition: "68% 35%"
+            }}
+          />
+          {/* Dark Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+
+          {/* Badge */}
+          <div className="absolute top-8 left-8 z-10">
+            <div className="inline-flex items-center justify-center px-[16px] py-[8px] rounded-[32px] bg-[#818181]/40 backdrop-blur-[4px] border border-[#CCC]/40 w-fit">
+              <span className="text-white text-xs font-medium tracking-wide">Jianshan Academy 2026</span>
+            </div>
+          </div>
+
+          {/* Marketing Text */}
+          <div className="absolute bottom-14 left-8 space-y-4 z-10">
+            <h1 className="text-white text-xl font-black leading-tight drop-shadow-sm">
+              A borderless micro-university
+              <br />built by you and
+              <span className="text-[#FFB800]"> Cambridge Scholars</span>
+            </h1>
+            <p className="text-white/80 text-xs font-light tracking-wide">
+              Unlock the infinite possibilities of academic exploration
+            </p>
+          </div>
+        </div>
+
+        {/* Bottom Action Section */}
+        <div className="flex-1 bg-white rounded-t-[32px] -mt-8 relative z-20 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] isolate overflow-hidden flex flex-col">
+          <div className="w-full h-full overflow-y-auto px-8 pt-12 pb-8 flex flex-col justify-start">
+
+            <div className="flex flex-col items-center text-center space-y-8">
+              <div className="relative w-[70px] h-[95px]">
+                <Image
+                  src="/jianshan-login-logo.png"
+                  alt="Jianshan Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold text-gray-900">Welcome to Jianshan</h2>
+                <p className="text-sm text-gray-500 leading-relaxed font-normal">
+                  Jianshan Summer Camp 2026 is now open for applications.
+                  <br />Check our website for camp details.
+                </p>
+              </div>
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight tracking-tight">
-              Inspire the Next<br />
-              <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
-                Generation
-              </span>
+            <div className="space-y-4 mt-8 w-full">
+              <Button
+                variant="default"
+                onClick={() => router.push('/login')}
+                className="h-14 w-full bg-primary hover:bg-primary/90 text-white font-bold gap-2 rounded-xl text-[14px] shadow-lg outline-none border-none ring-0 focus:ring-0 focus:outline-none transition-all"
+              >
+                <Mail className="h-4 w-4" />
+                Sign In
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => router.push('/register')}
+                className="h-14 w-full bg-white hover:bg-white text-gray-700 hover:text-primary/80 font-bold gap-2 rounded-xl text-[14px] border-2 border-gray-100 hover:border-primary/20 shadow-sm hover:shadow-md transition-all"
+              >
+                <UserPlus className="h-4 w-4" />
+                Create Account
+              </Button>
+            </div>
+
+            <div className="mt-8 pb-4 w-full text-center">
+              <div className="text-[10px] text-gray-400">
+                <span>© 2026 Jianshan Academy</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      {/* =======================
+                DESKTOP LAYOUT (hidden lg:block)
+               ======================= */}
+      <div className="hidden lg:block relative w-full lg:h-[calc(100vh-3rem)] lg:rounded-[2rem] overflow-hidden bg-primary/95 group/design-root shadow-2xl">
+        {/* Background Image */}
+        <div
+          className={`absolute inset-0 z-0 bg-cover bg-center transition-all duration-700 hover:scale-105 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+          style={{ backgroundImage: backgroundImage ? `url('${backgroundImage}')` : 'none' }}
+        />
+        <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+
+        {/* Grid Layout */}
+        <div className="relative z-10 w-full h-full grid grid-cols-2 p-16 gap-8">
+
+          {/* Left Column - Poster Content */}
+          <div className="flex flex-col justify-end items-start space-y-6">
+            <div className="inline-flex items-center justify-center px-4 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/10">
+              <span className="text-white font-medium text-lg tracking-wide">Jianshan Academy 2026</span>
+            </div>
+            <h1 className="text-white text-5xl xl:text-6xl font-black leading-tight tracking-tight drop-shadow-md">
+              A borderless<br />
+              micro-university<br />
+              built by you and<br />
+              <span className="text-accent">Cambridge Scholars</span>
             </h1>
-
-            <p className="text-xl md:text-2xl text-blue-100/80 mb-4 max-w-3xl mx-auto leading-relaxed">
-              {PROGRAMME_INFO.description}
+            <p className="text-gray-200 text-lg font-light tracking-wide opacity-90">
+              Unlock the infinite possibilities of academic exploration
             </p>
+          </div>
 
-            <p className="text-lg text-blue-200/60 mb-10 max-w-2xl mx-auto">
-              Application deadline: {PROGRAMME_DATES.applicationDeadline}
-            </p>
+          {/* Right Column - Action Panel */}
+          <div className="flex items-center justify-end h-full">
+            <div className="w-full max-w-[480px] bg-white/80 backdrop-blur-[5px] border border-white/40 shadow-xl rounded-[32px] pt-12 px-12 pb-8 relative flex flex-col h-full overflow-y-auto scrollbar-hide">
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link href="/register">
-                <Button size="lg" className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-8 py-6 text-lg rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30">
-                  Apply Now
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 px-8 py-6 text-lg rounded-xl backdrop-blur-sm">
+              {/* Panel Header */}
+              <div className="flex flex-col items-center text-center space-y-10">
+                <div className="relative w-[80px] h-[110px] mt-8 mb-10">
+                  <Image
+                    src="/jianshan-login-logo.png"
+                    alt="Jianshan Logo"
+                    fill
+                    className="object-contain"
+                    priority
+                  />
+                </div>
+                <div className="space-y-4">
+                  <h2 className="text-primary tracking-tight text-3xl font-bold leading-tight">Welcome to Jianshan</h2>
+                  <p className="text-muted-foreground text-muted-foreground/80 text-sm font-normal leading-relaxed max-w-xs mx-auto">
+                    Jianshan Summer Camp 2026 is now open for applications.
+                    <br />Check our website for camp details.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-4 mt-8 w-full">
+                <Button
+                  variant="default"
+                  onClick={() => router.push('/login')}
+                  className="h-14 w-full bg-primary hover:bg-primary/90 text-white font-bold gap-3 shadow-lg hover:shadow-xl rounded-xl outline-none border-none ring-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 transition-all"
+                >
+                  <Mail className="h-5 w-5" />
                   Sign In
                 </Button>
-              </Link>
+
+                <Button
+                  variant="outline"
+                  onClick={() => router.push('/register')}
+                  className="h-14 w-full bg-white/60 hover:bg-white text-primary hover:text-primary/80 font-bold gap-3 border-1 border-primary/10 hover:border-primary/20 shadow-sm hover:shadow-md rounded-xl transition-all"
+                >
+                  <UserPlus className="h-5 w-5" />
+                  Create Account
+                </Button>
+              </div>
+
+              <div className="mt-auto pt-6 w-full text-center">
+                <div className="text-xs text-muted-foreground/60">
+                  <span>© 2026 Jianshan Academy</span>
+                </div>
+              </div>
+
             </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Why Join as a Tutor?</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Make a meaningful impact while developing your own skills and enriching your CV
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: GraduationCap,
-                title: "Share Your Expertise",
-                description: "Lead seminars and workshops in your subject area. Help ambitious students explore academic interests and develop critical thinking skills.",
-                color: "from-blue-500 to-cyan-500",
-              },
-              {
-                icon: Users,
-                title: "Mentorship Experience",
-                description: "Gain valuable teaching and mentoring experience. Work closely with small groups of students in an intensive, rewarding programme.",
-                color: "from-violet-500 to-purple-500",
-              },
-              {
-                icon: BookOpen,
-                title: "Competitive Package",
-                description: "Receive competitive compensation, full accommodation, and meals during the programme. Travel and visa support provided.",
-                color: "from-teal-500 to-emerald-500",
-              },
-            ].map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.15 }}
-              >
-                <div className="group relative bg-slate-50 rounded-2xl p-8 hover:bg-white hover:shadow-xl transition-all duration-300 border border-slate-100">
-                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-6 shadow-lg`}>
-                    <feature.icon className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-slate-900 mb-3">{feature.title}</h3>
-                  <p className="text-slate-600 leading-relaxed">{feature.description}</p>
-                </div>
-              </motion.div>
-            ))}
           </div>
         </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-24 bg-slate-50">
-        <div className="max-w-4xl mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Application Process</h2>
-            <p className="text-lg text-slate-600">Simple, straightforward, and takes about 15 minutes</p>
-          </motion.div>
-
-          <div className="space-y-6">
-            {[
-              { step: 1, title: "Create an Account", desc: "Sign up with your email or Google account" },
-              { step: 2, title: "Complete Your Profile", desc: "Fill in your academic background and subject preferences" },
-              { step: 3, title: "Write Your Essays", desc: "Tell us about your motivation and experience" },
-              { step: 4, title: "Submit & Wait", desc: "We'll review your application within 15 working days" },
-            ].map((item, index) => (
-              <motion.div
-                key={item.step}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="flex items-start gap-6 bg-white rounded-xl p-6 border border-slate-200"
-              >
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold">
-                  {item.step}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900 text-lg">{item.title}</h3>
-                  <p className="text-slate-600 mt-1">{item.desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Ready to Make a Difference?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Join our team of Cambridge tutors and help shape the future of education.
-          </p>
-          <Link href="/register">
-            <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-6 text-lg rounded-xl shadow-lg">
-              Start Your Application
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }

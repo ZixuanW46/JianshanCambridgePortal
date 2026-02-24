@@ -1,10 +1,14 @@
 export interface Application {
     id: string;
     userId: string;
-    status: 'draft' | 'submitted' | 'under_review' | 'accepted' | 'rejected' | 'waitlisted';
+    status: 'draft' | 'submitted' | 'under_review' | 'accepted' | 'rejected' | 'waitlisted' | 'enrolled';
     submittedAt?: string;
     createdAt?: string;
     lastUpdatedAt: string;
+    decisionReleasedAt?: string;
+    timeline?: {
+        submittedAt?: string;
+    };
     personalInfo: {
         firstName: string;
         lastName: string;

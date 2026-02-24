@@ -5,193 +5,168 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Application } from "@/lib/types";
 import { dbService } from "@/lib/db-service";
-import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DecisionCard } from "@/components/admin/decision-card";
+import { NotesSection } from "@/components/admin/notes-section";
 import Link from "next/link";
 
 function AdminApplicationDetailContent() {
     const { user, loading: authLoading, isAdmin } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const applicationId = searchParams.get("id");
+
     const [application, setApplication] = useState<Application | null>(null);
     const [loading, setLoading] = useState(true);
-    const [decision, setDecision] = useState('');
-    const [updating, setUpdating] = useState(false);
-    const [note, setNote] = useState('');
-    const [addingNote, setAddingNote] = useState(false);
 
-    const searchParams = useSearchParams();
-    const applicationId = searchParams.get('id');
+    useEffect(() => {
+        if (!authLoading) {
+            if (!user) { router.push("/login"); return; }
+            if (!isAdmin) { router.push("/dashboard"); return; }
+        }
+    }, [user, authLoading, isAdmin, router]);
 
     const fetchApplication = async () => {
         if (!applicationId) return;
+        setLoading(true);
         try {
-            const token = await user?.getIdToken();
-            const res = await fetch('/api/admin', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const { data } = await res.json();
-            const found = data?.find((a: any) => a.id === applicationId);
-            if (found) setApplication(found);
-        } catch (e) {
-            console.error(e);
+            const app = await dbService.getMyApplication(applicationId);
+            setApplication(app as Application);
+        } catch (error) {
+            console.error("Failed to fetch application:", error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        if (!authLoading && !isAdmin) {
-            router.push('/');
-            return;
-        }
-        if (isAdmin && applicationId) {
-            fetchApplication();
-        } else if (isAdmin && !applicationId) {
-            setLoading(false);
-        }
-    }, [authLoading, isAdmin, applicationId]);
+        if (!user || !isAdmin || !applicationId) return;
+        fetchApplication();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, isAdmin, applicationId]);
 
-    const handleUpdateStatus = async (newStatus: string) => {
-        if (!application || !user) return;
-        setUpdating(true);
-        try {
-            await dbService.updateApplicationStatus(application.id, newStatus);
-            await fetchApplication();
-        } catch (err) {
-            console.error("Update failed:", err);
-        } finally {
-            setUpdating(false);
-        }
-    };
-
-    const handleAddNote = async () => {
-        if (!application || !user || !note.trim()) return;
-        setAddingNote(true);
-        try {
-            await dbService.addAdminNote(application.id, note.trim(), user.displayName || user.email || 'Admin');
-            setNote('');
-            await fetchApplication();
-        } catch (err) {
-            console.error("Note add failed:", err);
-        } finally {
-            setAddingNote(false);
-        }
-    };
-
-    if (authLoading || (isAdmin && loading)) {
-        return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>;
-    }
-
-    if (!application) {
+    if (authLoading || loading) {
         return (
-            <div className="p-8">
-                <p>Application not found or no ID provided.</p>
-                <Link href="/admin/dashboard"><Button variant="link">Back to Dashboard</Button></Link>
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
         );
     }
 
+    if (!application) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen">
+                <p className="text-slate-500 mb-4">Application not found.</p>
+                <Link href="/admin/dashboard" className="text-primary hover:underline">← Back to Dashboard</Link>
+            </div>
+        );
+    }
+
+    const personalInfo = application.personalInfo || {} as Application['personalInfo'];
+    const essays = application.essays || {};
+    const fullName = [personalInfo.firstName, personalInfo.lastName].filter(Boolean).join(' ') || "No Name";
+
     return (
-        <div className="min-h-screen bg-slate-50 pb-20 pt-8">
-            <div className="container mx-auto max-w-6xl px-4">
-                <div className="mb-6">
-                    <Link href="/admin/dashboard" className="text-sm text-slate-500 hover:text-blue-600 flex items-center gap-1">
-                        <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+        <div className="min-h-screen bg-slate-50">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Header */}
+                <div className="mb-8 flex items-center gap-4">
+                    <Link href="/admin/dashboard" className="text-slate-600 hover:text-slate-900 transition-colors">
+                        <ArrowLeft className="w-5 h-5" />
                     </Link>
-                    <div className="flex justify-between items-start mt-4">
-                        <div>
-                            <h1 className="text-3xl font-bold text-slate-900">
-                                {application.personalInfo?.firstName} {application.personalInfo?.lastName}
-                            </h1>
-                            <div className="flex items-center gap-3 mt-2">
-                                <span className="text-slate-500">{application.personalInfo?.university}</span>
-                                <StatusBadge status={application.status} />
-                            </div>
+                    <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-bold text-slate-900">{fullName}</h1>
+                            <StatusBadge status={application.status} />
                         </div>
-                        <div className="text-right text-sm text-slate-500">
-                            <p>ID: {application.id}</p>
-                            <p>Email: {application.personalInfo?.email}</p>
-                        </div>
+                        <p className="text-slate-500 text-sm mt-1">
+                            {personalInfo.email || "No Email"} · Application ID: {applicationId}
+                        </p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Left: Application Details */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Left Column: Application Data */}
                     <div className="lg:col-span-2 space-y-6">
+                        {/* Personal Information */}
                         <Card>
                             <CardHeader><CardTitle>Personal Information</CardTitle></CardHeader>
-                            <CardContent className="grid grid-cols-2 gap-4 text-sm">
-                                <div><span className="text-slate-500">Name:</span> <span className="font-medium">{application.personalInfo?.firstName} {application.personalInfo?.lastName}</span></div>
-                                <div><span className="text-slate-500">Email:</span> <span className="font-medium">{application.personalInfo?.email}</span></div>
-                                <div><span className="text-slate-500">Phone:</span> <span className="font-medium">{application.personalInfo?.phone || 'N/A'}</span></div>
-                                <div><span className="text-slate-500">Nationality:</span> <span className="font-medium">{application.personalInfo?.nationality || 'N/A'}</span></div>
-                                <div><span className="text-slate-500">University:</span> <span className="font-medium">{application.personalInfo?.university}</span></div>
-                                <div><span className="text-slate-500">College:</span> <span className="font-medium">{application.personalInfo?.college || 'N/A'}</span></div>
-                                <div><span className="text-slate-500">Programme:</span> <span className="font-medium">{application.personalInfo?.programme || 'N/A'}</span></div>
-                                <div><span className="text-slate-500">Year:</span> <span className="font-medium">{application.personalInfo?.yearOfStudy || 'N/A'}</span></div>
-                                <div className="col-span-2"><span className="text-slate-500">Subjects:</span> <span className="font-medium">{application.personalInfo?.subjects?.join(', ') || 'N/A'}</span></div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader><CardTitle>Motivation Essay</CardTitle></CardHeader>
                             <CardContent>
-                                <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{application.essays?.motivation || 'Not provided'}</p>
-                            </CardContent>
-                        </Card>
-
-                        {application.essays?.experience && (
-                            <Card>
-                                <CardHeader><CardTitle>Teaching Experience</CardTitle></CardHeader>
-                                <CardContent>
-                                    <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{application.essays.experience}</p>
-                                </CardContent>
-                            </Card>
-                        )}
-                    </div>
-
-                    {/* Right: Admin Actions */}
-                    <div className="space-y-6">
-                        <Card>
-                            <CardHeader><CardTitle>Decision</CardTitle></CardHeader>
-                            <CardContent className="space-y-3">
-                                <p className="text-sm text-slate-500 mb-2">Current status: <StatusBadge status={application.status} /></p>
-                                <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => handleUpdateStatus('accepted')} disabled={updating}>
-                                    Accept
-                                </Button>
-                                <Button className="w-full" variant="outline" onClick={() => handleUpdateStatus('waitlisted')} disabled={updating}>
-                                    Waitlist
-                                </Button>
-                                <Button className="w-full bg-red-600 hover:bg-red-700 text-white" onClick={() => handleUpdateStatus('rejected')} disabled={updating}>
-                                    Reject
-                                </Button>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader><CardTitle>Admin Notes</CardTitle></CardHeader>
-                            <CardContent className="space-y-3">
-                                {application.adminData?.notes?.map((n: any, i: number) => (
-                                    <div key={i} className="text-sm border-b pb-2 last:border-0">
-                                        <p className="text-slate-700">{n.content}</p>
-                                        <p className="text-xs text-slate-400 mt-1">{n.author} · {new Date(n.createdAt).toLocaleDateString()}</p>
-                                    </div>
-                                ))}
-                                <div className="flex gap-2 mt-4">
-                                    <input
-                                        value={note}
-                                        onChange={e => setNote(e.target.value)}
-                                        placeholder="Add a note..."
-                                        className="flex-1 text-sm border rounded-lg px-3 py-2"
-                                    />
-                                    <Button size="sm" onClick={handleAddNote} disabled={addingNote || !note.trim()}>
-                                        {addingNote ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
-                                    </Button>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                    <InfoRow label="First Name" value={personalInfo.firstName} />
+                                    <InfoRow label="Last Name" value={personalInfo.lastName} />
+                                    <InfoRow label="Email" value={personalInfo.email} />
+                                    <InfoRow label="Phone" value={personalInfo.phone} />
+                                    <InfoRow label="Date of Birth" value={personalInfo.dateOfBirth} />
+                                    <InfoRow label="Gender" value={personalInfo.gender} />
+                                    <InfoRow label="Nationality" value={personalInfo.nationality} />
+                                    <InfoRow label="University" value={personalInfo.university} />
+                                    <InfoRow label="College" value={personalInfo.college} />
+                                    <InfoRow label="Department" value={personalInfo.department} />
+                                    <InfoRow label="Programme" value={personalInfo.programme} />
+                                    <InfoRow label="Year of Study" value={personalInfo.yearOfStudy} />
+                                    <InfoRow label="Subjects" value={personalInfo.subjects?.join(', ')} />
                                 </div>
                             </CardContent>
                         </Card>
+
+                        {/* Essays */}
+                        {essays && Object.keys(essays).length > 0 && (
+                            <Card>
+                                <CardHeader><CardTitle>Essays</CardTitle></CardHeader>
+                                <CardContent className="space-y-6">
+                                    {essays.motivation && (
+                                        <div>
+                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Motivation</h4>
+                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{essays.motivation}</p>
+                                        </div>
+                                    )}
+                                    {essays.experience && (
+                                        <div>
+                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Teaching Experience</h4>
+                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{essays.experience}</p>
+                                        </div>
+                                    )}
+                                    {essays.additionalInfo && (
+                                        <div>
+                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Additional Information</h4>
+                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{essays.additionalInfo}</p>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Timeline */}
+                        <Card>
+                            <CardHeader><CardTitle>Timeline</CardTitle></CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                    <InfoRow label="Created" value={application.createdAt ? new Date(application.createdAt).toLocaleString() : undefined} />
+                                    <InfoRow label="Submitted" value={application.submittedAt ? new Date(application.submittedAt).toLocaleString() : undefined} />
+                                    <InfoRow label="Last Updated" value={application.lastUpdatedAt ? new Date(application.lastUpdatedAt).toLocaleString() : undefined} />
+                                    <InfoRow label="Decision Released" value={application.decisionReleasedAt ? new Date(application.decisionReleasedAt).toLocaleString() : undefined} />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Right Column: Decision + Notes */}
+                    <div className="space-y-6">
+                        <DecisionCard
+                            applicationId={applicationId!}
+                            currentInternalDecision={application.adminData?.internalDecision}
+                            currentPublicStatus={application.status}
+                            onUpdate={fetchApplication}
+                        />
+
+                        <NotesSection
+                            applicationId={applicationId!}
+                            notes={application.adminData?.notes || []}
+                            onNoteAdded={fetchApplication}
+                        />
                     </div>
                 </div>
             </div>
@@ -199,9 +174,22 @@ function AdminApplicationDetailContent() {
     );
 }
 
+function InfoRow({ label, value }: { label: string; value?: string | null }) {
+    return (
+        <div>
+            <dt className="text-slate-500 text-xs font-medium uppercase tracking-wide">{label}</dt>
+            <dd className="text-slate-900 mt-0.5">{value || <span className="text-slate-400">-</span>}</dd>
+        </div>
+    );
+}
+
 export default function AdminApplicationDetailPage() {
     return (
-        <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>}>
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        }>
             <AdminApplicationDetailContent />
         </Suspense>
     );

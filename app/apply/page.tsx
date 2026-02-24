@@ -70,10 +70,16 @@ export default function ApplicationForm() {
         const fetchApp = async () => {
             if (!user) return;
             try {
-                const myApp = await dbService.getMyApplication(user.uid);
+                let myApp = await dbService.getMyApplication(user.uid);
                 if (!myApp) {
-                    router.replace('/welcome');
-                    return;
+                    // Auto-create a draft application for new users
+                    try {
+                        myApp = await dbService.createApplication(user.uid, user.email || undefined);
+                    } catch (createErr) {
+                        console.error("Failed to create application:", createErr);
+                        router.replace('/welcome');
+                        return;
+                    }
                 }
                 setApp(myApp);
                 // Populate form fields
