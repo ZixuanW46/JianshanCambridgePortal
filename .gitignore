@@ -28,3 +28,6 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Old Version Backup
+old_chinese_version/
