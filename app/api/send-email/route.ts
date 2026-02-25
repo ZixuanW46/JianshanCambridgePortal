@@ -34,20 +34,20 @@ export async function POST(req: NextRequest) {
                 <img src="https://i.postimg.cc/CMGdvCGQ/bell-ring.png" width="15" height="15" alt="notification" style="width: 15px; height: 15px; vertical-align: text-bottom; margin-right: 6px; border: 0; outline: none; display: inline-block;" />APPLICATION RECEIVED
             </span>
         </div>
-        <h2 style="font-size: 24px; font-weight: bold; color: #111827; line-height: 1.4; margin-bottom: 24px; text-align: left; font-family: 'Lexend', sans-serif;">已收到您的见山夏令营申请</h2>
+        <h2 style="font-size: 24px; font-weight: bold; color: #111827; line-height: 1.4; margin-bottom: 24px; text-align: left; font-family: 'Lexend', sans-serif;">Your Tutor Application Has Been Received</h2>
         <div style="color: #4b5563; font-size: 16px; line-height: 1.8;">
-            <p style="margin-bottom: 16px;">亲爱的${name || '同学'}：</p>
-            <p style="margin-bottom: 16px;">我们已收到您的见山夏令营申请，感谢您在申请中的用心与投入！</p>
-            <p style="margin-bottom: 16px;">接下来，您的申请将由见山学院与剑桥大学CAMCapy社团的学长学姐组成的联合招生委员会进行认真细致的审核。每一份申请，我们都会悉心阅读。</p>
-            <p style="margin-bottom: 16px;">审核结果将在 <strong>15 个工作日</strong>内通过邮件通知，届时您也可以登录申请门户查看详情。</p>
-            <p>期待这个夏天与您相见！</p>
+            <p style="margin-bottom: 16px;">Dear ${name || 'Applicant'},</p>
+            <p style="margin-bottom: 16px;">Thank you for applying to join the Jianshan Academy × Cambridge Summer Programme as a tutor. We truly appreciate the time and thought you have put into your application.</p>
+            <p style="margin-bottom: 16px;">Your application will now be carefully reviewed by the Jianshan Academy admissions committee in collaboration with the CAMCapy Society at the University of Cambridge. Every application is read with care.</p>
+            <p style="margin-bottom: 16px;">You will be notified of the outcome by email within <strong>15 working days</strong>. You may also log in to the portal at any time to check your application status.</p>
+            <p>We look forward to the possibility of working with you this summer!</p>
         </div>
         <div style="margin-top: 40px; margin-bottom: 32px; padding: 30px 0; border-top: 1px dashed #e5e7eb; border-bottom: 1px dashed #e5e7eb; text-align: center;">
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 15px; margin-top: 0px">请留意邮件通知或登录查看进度</p>
-            <a href="https://jianshanacademy.cn" style="display: inline-block; background-color: #1f495b; background-image: linear-gradient(#1f495b, #1f495b); color: white; font-weight: bold; padding: 14px 36px; border-radius: 6px; text-decoration: none; box-shadow: 0 4px 6px -1px rgba(31, 73, 91, 0.3);">登录申请门户</a>
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 15px; margin-top: 0px">Keep an eye on your inbox or log in to track your progress</p>
+            <a href="https://jianshanacademy.com" style="display: inline-block; background-color: #1f495b; background-image: linear-gradient(#1f495b, #1f495b); color: white; font-weight: bold; padding: 14px 36px; border-radius: 6px; text-decoration: none; box-shadow: 0 4px 6px -1px rgba(31, 73, 91, 0.3);">Log In to Portal</a>
         </div>
         <div style="text-align: center; font-size: 13px; color: #6b7280;">
-            <p>如有任何疑问，请联系 <a style="color: #1f495b; text-decoration: underline;" href="https://work.weixin.qq.com/kfid/kfcab82111f455c08bc">见山学院小助手</a>。</p>
+            <p>If you have any questions, please contact us at <a style="color: #1f495b; text-decoration: underline;" href="mailto:camcapy@cambridgesu.co.uk">camcapy@cambridgesu.co.uk</a>.</p>
         </div>
     </div>
     <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #f3f4f6;">
@@ -79,18 +79,18 @@ export async function POST(req: NextRequest) {
                 <img src="https://i.postimg.cc/CMGdvCGQ/bell-ring.png" width="15" height="15" alt="notification" style="width: 15px; height: 15px; vertical-align: text-bottom; margin-right: 6px; border: 0; outline: none; display: inline-block;" />NEW NOTIFICATION
             </span>
         </div>
-        <h2 style="font-size: 24px; font-weight: bold; color: #111827; line-height: 1.4; margin-bottom: 24px; text-align: left; font-family: 'Lexend', sans-serif;">您的见山夏令营申请结果已出</h2>
+        <h2 style="font-size: 24px; font-weight: bold; color: #111827; line-height: 1.4; margin-bottom: 24px; text-align: left; font-family: 'Lexend', sans-serif;">Your Application Decision Is Ready</h2>
         <div style="color: #4b5563; font-size: 16px; line-height: 1.8;">
-            <p style="margin-bottom: 16px;">亲爱的${name || '同学'}：</p>
-            <p style="margin-bottom: 16px;">见山夏令营招生委员会已完成对您的申请审核，录取结果现已正式公布。</p>
-            <p>感谢您对见山夏令营的关注与支持！无论结果如何，我们都对您在申请过程中付出的努力表示由衷的感谢。请点击下方按钮登录申请门户，查阅您的详细录取结果及后续指引。</p>
+            <p style="margin-bottom: 16px;">Dear ${name || 'Applicant'},</p>
+            <p style="margin-bottom: 16px;">The Jianshan Academy admissions committee has completed its review of your tutor application, and a decision has been made.</p>
+            <p>Thank you for your interest in joining the Cambridge Summer Programme as a tutor. Regardless of the outcome, we are grateful for the effort you invested in your application. Please click the button below to log in and view your detailed result and next steps.</p>
         </div>
         <div style="margin-top: 40px; margin-bottom: 32px; padding: 30px 0; border-top: 1px dashed #e5e7eb; border-bottom: 1px dashed #e5e7eb; text-align: center;">
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px; margin-top: 0px">请于收到本通知后 48 小时内登录查看</p>
-            <a href="https://jianshanacademy.cn" style="display: inline-block; background-color: #1f495b; background-image: linear-gradient(#1f495b, #1f495b); color: white; font-weight: bold; padding: 14px 36px; border-radius: 6px; text-decoration: none; box-shadow: 0 4px 6px -1px rgba(31, 73, 91, 0.3);">登录门户查看结果</a>
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px; margin-top: 0px">Please log in within 48 hours of receiving this notification</p>
+            <a href="https://jianshanacademy.com" style="display: inline-block; background-color: #1f495b; background-image: linear-gradient(#1f495b, #1f495b); color: white; font-weight: bold; padding: 14px 36px; border-radius: 6px; text-decoration: none; box-shadow: 0 4px 6px -1px rgba(31, 73, 91, 0.3);">View Your Decision</a>
         </div>
         <div style="text-align: center; font-size: 13px; color: #6b7280;">
-            <p>如有任何登录问题，请联系 <a style="color: #1f495b; text-decoration: underline;" href="https://work.weixin.qq.com/kfid/kfcab82111f455c08bc">见山学院小助手</a>。</p>
+            <p>If you experience any issues logging in, please contact us at <a style="color: #1f495b; text-decoration: underline;" href="mailto:camcapy@cambridgesu.co.uk">camcapy@cambridgesu.co.uk</a>.</p>
         </div>
     </div>
     <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #f3f4f6;">

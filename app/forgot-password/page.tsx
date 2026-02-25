@@ -148,7 +148,7 @@ export default function ForgotPasswordPage() {
                                         </Link>
                                     </p>
                                     <div className="mt-12 text-xs text-muted-foreground/60">
-                                        <span>© 2026 Jianshan Academy</span>
+                                        <span>© 2026 Jianshan Academy. All rights reserved.</span>
                                     </div>
                                 </div>
                             )}
@@ -225,7 +225,7 @@ export default function ForgotPasswordPage() {
                                         </div>
                                         <div className="text-center mt-auto">
                                             <div className="mt-8 text-xs text-muted-foreground/60">
-                                                <span>© 2026 Jianshan Academy</span>
+                                                <span>© 2026 Jianshan Academy. All rights reserved.</span>
                                             </div>
                                         </div>
                                     </>

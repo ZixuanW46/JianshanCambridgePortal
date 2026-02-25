@@ -86,7 +86,7 @@ export function Navbar() {
                                 href="/faq"
                                 className={cn("text-sm font-medium transition-colors hover:text-primary hidden sm:block", pathname === '/faq' ? "text-primary" : "text-muted-foreground")}
                             >
-                                Camp Details
+                                FAQ
                             </Link>
                         )}
 
@@ -140,7 +140,7 @@ export function Navbar() {
                                     <div className="p-1 bg-gray-100 rounded-md">
                                         <HelpCircle className="h-4 w-4" />
                                     </div>
-                                    Camp Details
+                                    FAQ
                                 </Link>
                             )}
 
