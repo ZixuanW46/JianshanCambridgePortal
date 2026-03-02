@@ -64,9 +64,27 @@ function AdminApplicationDetailContent() {
         );
     }
 
-    const personalInfo = application.personalInfo || {} as Application['personalInfo'];
-    const essays = application.essays || {};
-    const fullName = [personalInfo.firstName, personalInfo.lastName].filter(Boolean).join(' ') || "No Name";
+    const personalInfo = {
+        firstName: application.section1_personal?.full_name?.split(' ')[0] || application.personalInfo?.firstName || '',
+        lastName: application.section1_personal?.full_name?.split(' ').slice(1).join(' ') || application.personalInfo?.lastName || '',
+        email: application.section1_personal?.personal_email || application.personalInfo?.email || '',
+        phone: application.section1_personal?.phone_number || application.personalInfo?.phone || '',
+        dateOfBirth: application.section1_personal?.date_of_birth || application.personalInfo?.dateOfBirth || '',
+        gender: application.personalInfo?.gender || '',
+        nationality: application.section1_personal?.nationality || application.personalInfo?.nationality || '',
+        university: application.personalInfo?.university || 'University of Cambridge',
+        college: application.section1_personal?.college || application.personalInfo?.college || '',
+        department: application.personalInfo?.department || '',
+        programme: application.section1_personal?.degree_level || application.personalInfo?.programme || '',
+        yearOfStudy: application.section1_personal?.year_of_study || application.personalInfo?.yearOfStudy || '',
+        subjects: application.section1_personal?.subject ? [application.section1_personal.subject] : application.personalInfo?.subjects || [],
+    };
+    const essays = {
+        motivation: application.section2_about_you?.tell_us_about_yourself || application.essays?.motivation || '',
+        experience: application.section3_teaching?.experience_and_strengths || application.essays?.experience || '',
+        additionalInfo: application.section5_availability?.additional_notes || application.essays?.additionalInfo || '',
+    };
+    const fullName = application.section1_personal?.full_name || [personalInfo.firstName, personalInfo.lastName].filter(Boolean).join(' ') || "No Name";
 
     return (
         <div className="min-h-screen bg-slate-50">

@@ -75,7 +75,7 @@ export default function AcceptancePage() {
         if (!offerLetterRef.current || !app) return;
         setDownloading(true);
         try {
-            const fullName = [app.personalInfo?.firstName, app.personalInfo?.lastName].filter(Boolean).join(' ') || "Applicant";
+            const fullName = app.section1_personal?.full_name || [app.personalInfo?.firstName, app.personalInfo?.lastName].filter(Boolean).join(' ') || "Applicant";
             await generateOfferPdf(offerLetterRef.current, fullName);
         } catch (err) {
             console.error("PDF generation failed:", err);

@@ -16,32 +16,71 @@ export const PROGRAMME_DATES = {
     programmeDates: 'July – August 2026',
 };
 
-export const SUBJECTS = [
-    'Mathematics',
-    'Physics',
-    'Chemistry',
-    'Biology',
-    'Computer Science',
-    'Economics',
-    'History',
-    'English Literature',
-    'Philosophy',
-    'Psychology',
-    'Engineering',
-    'Medicine',
-    'Law',
-    'Other',
+export const COLLEGES = [
+    "Christ's College", "Churchill College", "Clare College", "Clare Hall", "Corpus Christi College",
+    "Darwin College", "Downing College", "Emmanuel College", "Fitzwilliam College", "Girton College",
+    "Gonville and Caius College", "Homerton College", "Hughes Hall", "Jesus College", "King's College",
+    "Lucy Cavendish College", "Magdalene College", "Murray Edwards College", "Newnham College",
+    "Pembroke College", "Peterhouse", "Queens' College", "Robinson College", "Selwyn College",
+    "Sidney Sussex College", "St Catharine's College", "St Edmund's College", "St John's College",
+    "Trinity College", "Trinity Hall", "Wolfson College"
 ];
 
-export const YEAR_OPTIONS = [
-    'Year 1 (Undergraduate)',
-    'Year 2 (Undergraduate)',
-    'Year 3 (Undergraduate)',
-    'Year 4 (Undergraduate)',
-    'Masters',
-    'PhD',
-    'Postdoc',
-    'Recent Graduate',
+export const SUBJECTS_GROUPED = {
+    "Sciences & Engineering": [
+        "Aerospace and Aerothermal Engineering", "Astronomy", "Biochemistry", "Biological and Biomedical Sciences",
+        "Biotechnology", "Chemical Engineering", "Chemistry", "Civil, Structural and Environmental Engineering",
+        "Computer Science", "Earth Sciences (Geology)", "Electrical and Electronic Engineering", "Energy Technologies",
+        "Engineering", "Environmental Science / Policy", "Genetics", "Information and Computer Engineering",
+        "Manufacturing Engineering", "Materials Science and Metallurgy", "Mathematics", "Mechanical Engineering",
+        "Natural Sciences", "Nuclear Energy", "Pathology", "Pharmacology", "Physics",
+        "Physiology, Development and Neuroscience", "Plant Sciences", "Psychology", "Systems Biology",
+        "Veterinary Medicine", "Zoology"
+    ],
+    "Medicine": [
+        "Clinical Medicine", "Medicine (Pre-clinical / Graduate)", "Public Health"
+    ],
+    "Arts, Humanities & Social Sciences": [
+        "Anglo-Saxon, Norse and Celtic", "Archaeology", "Architecture", "Asian and Middle Eastern Studies",
+        "Classics / Classical Tripos", "Criminology", "Development Studies", "Economics", "Education", "English",
+        "Film and Screen Studies", "Geography", "History", "History and Philosophy of Science", "History and Politics",
+        "History of Art", "Human, Social and Political Sciences (HSPS)", "International Relations", "Land Economy", "Law",
+        "Linguistics", "Management Studies / MBA", "Modern and Medieval Languages (MML)", "Music", "Philosophy",
+        "Politics and International Studies (POLIS)", "Social Anthropology", "Sociology",
+        "Theology, Religion and Philosophy of Religion"
+    ],
+    "Interdisciplinary & Other": [
+        "Cognitive Science", "Data Science", "Digital Humanities", "Finance / Financial Engineering",
+        "Machine Learning and Machine Intelligence", "Multi-disciplinary Gender Studies",
+        "Planning, Growth and Regeneration", "Real Estate Finance", "Sustainability Leadership", "Other"
+    ]
+};
+
+export const DEGREE_LEVELS = [
+    "Undergraduate",
+    "Master's",
+    "PhD",
+    "Postdoc"
+];
+
+export const YEAR_OF_STUDY_OPTIONS = [
+    "1st Year",
+    "2nd Year",
+    "3rd Year",
+    "4th Year",
+    "Master's",
+    "PhD",
+    "Postdoc",
+    "Other"
+];
+
+export const DIETARY_RESTRICTIONS = [
+    'None',
+    'Vegetarian',
+    'Vegan',
+    'Halal',
+    'Gluten-free',
+    'Other'
 ];
 
 export const AVAILABILITY_OPTIONS = [

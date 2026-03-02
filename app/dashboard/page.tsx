@@ -262,7 +262,7 @@ function ApplicationDetails({ app }: { app: Application }) {
                     <User className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
                         <p className="text-xs uppercase font-bold text-muted-foreground">Name</p>
-                        <p className="text-sm font-medium">{[app.personalInfo?.firstName, app.personalInfo?.lastName].filter(Boolean).join(' ') || <span className="italic text-muted-foreground">Not Filled</span>}</p>
+                        <p className="text-sm font-medium">{app.section1_personal?.full_name || [app.personalInfo?.firstName, app.personalInfo?.lastName].filter(Boolean).join(' ') || <span className="italic text-muted-foreground">Not Filled</span>}</p>
                     </div>
                 </div>
                 <div className="h-px bg-border w-full"></div>
@@ -315,7 +315,7 @@ export default function DashboardPage() {
         if (!offerLetterRef.current || !app) return;
         setDownloading(true);
         try {
-            const fullName = [app.personalInfo?.firstName, app.personalInfo?.lastName].filter(Boolean).join(' ');
+            const fullName = app.section1_personal?.full_name || [app.personalInfo?.firstName, app.personalInfo?.lastName].filter(Boolean).join(' ');
             await generateOfferPdf(offerLetterRef.current, fullName || "Applicant");
         } catch (err) {
             console.error("PDF generation failed:", err);

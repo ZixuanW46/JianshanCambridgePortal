@@ -38,6 +38,7 @@
   ],
   "exclude": [
     "node_modules",
-    "old_chinese_version"
+    "old_chinese_version",
+    "website_design"
   ]
 }

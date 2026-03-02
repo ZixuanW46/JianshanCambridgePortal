@@ -181,15 +181,19 @@ function RegisterPageContent() {
 
                     <div className="absolute top-8 left-8 z-10">
                         <div className="inline-flex items-center justify-center px-[16px] py-[8px] rounded-[32px] bg-[#818181]/40 backdrop-blur-[4px] border border-[#CCC]/40 w-fit">
-                            <span className="text-white text-xs font-medium tracking-wide">Jianshan Academy 2026</span>
+                            <span className="text-white text-xs font-medium tracking-wide">JOIN THE 2026 COHORT</span>
                         </div>
                     </div>
 
-                    <div className="absolute bottom-10 left-8 space-y-2 z-10">
-                        <h1 className="text-white text-xl font-black leading-tight drop-shadow-sm">
-                            Begin your<br />
-                            <span className="text-[#FFB800]">academic journey</span>
+                    <div className="absolute bottom-10 left-8 space-y-4 z-10">
+                        <h1 className="text-white text-xl font-serif leading-tight drop-shadow-sm">
+                            Go to inspire.
+                            <br />
+                            <span className="text-[#FFB800] italic">Return Inspired.</span>
                         </h1>
+                        <p className="text-white/80 text-xs font-light tracking-wide">
+                            Empowering the next generation of global thinkers through adventure, discovery, and real connections.
+                        </p>
                     </div>
                 </div>
 
@@ -239,19 +243,16 @@ function RegisterPageContent() {
 
                 <div className="relative z-10 w-full h-full grid grid-cols-2 p-16 gap-8">
 
-                    {/* Left Column */}
                     <div className="flex flex-col justify-end items-start space-y-6">
                         <div className="inline-flex items-center justify-center px-4 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/10">
-                            <span className="text-white font-medium text-lg tracking-wide">Jianshan Academy 2026</span>
+                            <span className="text-white font-medium text-lg tracking-wide uppercase">JOIN THE 2026 COHORT</span>
                         </div>
-                        <h1 className="text-white text-5xl xl:text-6xl font-black leading-tight tracking-tight drop-shadow-md">
-                            A borderless<br />
-                            micro-university<br />
-                            built by you and<br />
-                            <span className="text-accent">Cambridge Scholars</span>
+                        <h1 className="text-white text-5xl xl:text-6xl font-serif leading-tight tracking-tight drop-shadow-md">
+                            Go to inspire.<br />
+                            <span className="text-accent italic">Return Inspired.</span>
                         </h1>
                         <p className="text-gray-200 text-lg font-light tracking-wide opacity-90">
-                            Unlock the infinite possibilities of academic exploration
+                            Empowering the next generation of global thinkers through adventure, discovery, and real connections.
                         </p>
                     </div>
 
@@ -275,7 +276,7 @@ function RegisterPageContent() {
                                     <div className="text-left w-full mt-4">
                                         <h2 className="text-primary tracking-tight text-2xl font-bold leading-tight">Create Account</h2>
                                         <p className="text-muted-foreground/80 text-sm font-normal mt-2">
-                                            Create your account and begin your Jianshan journey.
+                                            Start your application for the Jianshan Scholarship 2026.
                                         </p>
                                     </div>
                                 </div>
