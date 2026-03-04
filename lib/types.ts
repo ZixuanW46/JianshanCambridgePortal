@@ -1,7 +1,7 @@
 export interface Application {
     id: string;
     userId: string;
-    status: 'draft' | 'submitted' | 'under_review' | 'accepted' | 'rejected' | 'waitlisted' | 'enrolled';
+    status: 'draft' | 'submitted' | 'under_review' | 'shortlisted' | 'round_2_submitted' | 'round_2_under_review' | 'accepted' | 'rejected' | 'waitlisted' | 'enrolled';
     submittedAt?: string;
     createdAt?: string;
     lastUpdatedAt: string;
@@ -13,6 +13,8 @@ export interface Application {
     // NEW STRUCTURE
     section1_personal?: {
         full_name: string;
+        gender?: string;
+        gender_other?: string | null;
         nationality: string;
         date_of_birth: string;
         phone_number: string;
@@ -21,7 +23,6 @@ export interface Application {
         college: string;
         subject: string;
         subject_other?: string | null;
-        degree_level?: string;
         year_of_study: string;
         year_of_study_other?: string | null;
     };
@@ -30,8 +31,8 @@ export interface Application {
         additional_file_url?: string | null;
     };
     section3_teaching?: {
-        interest_and_motivation: string;
-        experience_and_strengths: string;
+        subject_passion: string;
+        academy_motivation: string;
     };
     section4_travel?: {
         excitement_about_china: string;
@@ -43,39 +44,13 @@ export interface Application {
         dietary_other?: string | null;
         additional_notes?: string | null;
     };
-
-    // LEGACY STRUCTURE (Keeping for backwards compatibility)
-    personalInfo?: {
-        firstName: string;
-        lastName: string;
-        email: string;
-        phone?: string;
-        dateOfBirth?: string;
-        nationality?: string;
-        gender?: string;
-        university: string;
-        college?: string;
-        department?: string;
-        programme?: string;
-        yearOfStudy?: string;
-        subjects?: string[];
-        otherSubject?: string;
+    section6_round_2?: {
+        session_design_thoughts: string;
+        video_url: string;
     };
-    essays?: {
-        motivation?: string;
-        experience?: string;
-        additionalInfo?: string;
-    };
-    misc?: {
-        availability?: string[];
-        dietaryRestrictions?: string;
-        referralSource?: string;
-        agreedToTerms?: boolean;
-    };
-
     // Admin-only data
     adminData?: {
-        internalDecision?: 'accepted' | 'rejected' | 'waitlisted' | null;
+        internalDecision?: 'shortlisted' | 'accepted' | 'rejected' | 'waitlisted' | null;
         notes?: Array<{
             content: string;
             author: string;

@@ -39,13 +39,13 @@ export function Section({ number, title, titleEn, description, children }: { num
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.4 }}
         >
-            <Card ref={cardRef} className="overflow-hidden border-0 shadow-sm bg-white/80 backdrop-blur-sm ring-1 ring-slate-200/50 group hover:ring-blue-500/30 transition-all duration-500">
-                <div className="h-1.5 w-full bg-gradient-to-r from-blue-600/80 to-blue-400/40" />
+            <Card ref={cardRef} className="overflow-hidden border-0 shadow-sm bg-white/80 backdrop-blur-sm ring-1 ring-slate-200/50 group hover:ring-[#1A4D2E]/30 transition-all duration-500">
+                <div className="h-1.5 w-full bg-gradient-to-r from-[#0F2E18] to-[#1A4D2E]" />
 
                 <div className="relative p-6 sm:p-8 md:p-10">
                     <div
                         ref={textRef}
-                        className="absolute top-0 left-0 -mt-6 -ml-4 text-9xl font-black text-blue-500 select-none pointer-events-none z-0 transition-opacity duration-100 ease-out font-sans"
+                        className="absolute top-0 left-0 -mt-6 -ml-4 text-9xl font-black text-[#1A4D2E] select-none pointer-events-none z-0 transition-opacity duration-100 ease-out font-sans"
                         style={{ opacity: 0.05 }}
                     >
                         {number}

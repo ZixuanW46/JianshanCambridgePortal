@@ -15,12 +15,12 @@ import { Button } from "@/components/ui/button";
 
 interface DecisionCardProps {
     applicationId: string;
-    currentInternalDecision: 'accepted' | 'rejected' | 'waitlisted' | null | undefined;
+    currentInternalDecision: 'shortlisted' | 'accepted' | 'rejected' | 'waitlisted' | null | undefined;
     currentPublicStatus: string;
     onUpdate: () => void;
 }
 
-type DecisionType = 'accepted' | 'rejected' | 'waitlisted';
+type DecisionType = 'shortlisted' | 'accepted' | 'rejected' | 'waitlisted';
 
 export function DecisionCard({ applicationId, currentInternalDecision, currentPublicStatus, onUpdate }: DecisionCardProps) {
     const [loading, setLoading] = useState(false);
@@ -51,9 +51,16 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
         }
     };
 
-    const isReleased = ['accepted', 'rejected', 'waitlisted', 'enrolled'].includes(currentPublicStatus) && currentPublicStatus !== 'under_review';
+    const isReleased = ['shortlisted', 'accepted', 'rejected', 'waitlisted', 'enrolled'].includes(currentPublicStatus) && !['under_review', 'round_2_submitted', 'round_2_under_review'].includes(currentPublicStatus);
 
-    const decisionButtons = [
+    const allDecisionButtons = [
+        {
+            type: 'shortlisted' as DecisionType,
+            label: 'Shortlist',
+            icon: CheckCircle,
+            activeColor: 'bg-purple-500 text-white border-purple-500',
+            inactiveColor: 'bg-white text-slate-700 border-slate-200 hover:border-purple-500 hover:bg-purple-50'
+        },
         {
             type: 'accepted' as DecisionType,
             label: 'Accept',
@@ -77,8 +84,15 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
         }
     ];
 
+    const decisionButtons = currentPublicStatus === 'under_review'
+        ? allDecisionButtons.filter(b => ['shortlisted', 'rejected'].includes(b.type))
+        : ['round_2_submitted', 'round_2_under_review'].includes(currentPublicStatus)
+            ? allDecisionButtons.filter(b => ['accepted', 'rejected', 'waitlisted'].includes(b.type))
+            : allDecisionButtons;
+
     const getDecisionBadgeColor = () => {
         switch (currentInternalDecision) {
+            case 'shortlisted': return 'bg-purple-100 text-purple-700 border-purple-200';
             case 'accepted': return 'bg-green-100 text-green-700 border-green-200';
             case 'rejected': return 'bg-red-100 text-red-700 border-red-200';
             case 'waitlisted': return 'bg-amber-100 text-amber-700 border-amber-200';
@@ -216,9 +230,10 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
                             onClick={handleReleaseResult}
                             disabled={loading}
                             className={
-                                currentInternalDecision === 'accepted' ? 'bg-green-600 hover:bg-green-700' :
-                                    currentInternalDecision === 'rejected' ? 'bg-red-600 hover:bg-red-700' :
-                                        'bg-amber-600 hover:bg-amber-700'
+                                currentInternalDecision === 'shortlisted' ? 'bg-purple-600 hover:bg-purple-700' :
+                                    currentInternalDecision === 'accepted' ? 'bg-green-600 hover:bg-green-700' :
+                                        currentInternalDecision === 'rejected' ? 'bg-red-600 hover:bg-red-700' :
+                                            'bg-amber-600 hover:bg-amber-700'
                             }
                         >
                             {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}

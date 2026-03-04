@@ -63,6 +63,12 @@ export const DEGREE_LEVELS = [
     "Postdoc"
 ];
 
+export const GENDER_OPTIONS = [
+    "Female",
+    "Male",
+    "Other"
+];
+
 export const YEAR_OF_STUDY_OPTIONS = [
     "1st Year",
     "2nd Year",

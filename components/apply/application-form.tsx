@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { Application } from "@/lib/types";
-import { COLLEGES, SUBJECTS_GROUPED, DEGREE_LEVELS, YEAR_OF_STUDY_OPTIONS, DIETARY_RESTRICTIONS } from "@/lib/constants";
+import { COLLEGES, SUBJECTS_GROUPED, DEGREE_LEVELS, YEAR_OF_STUDY_OPTIONS, DIETARY_RESTRICTIONS, GENDER_OPTIONS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,25 +42,27 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
     // Initialize state from app or defaults
     const [formData, setFormData] = useState({
         section1_personal: {
-            full_name: app.section1_personal?.full_name || app.personalInfo?.firstName && `${app.personalInfo.firstName} ${app.personalInfo.lastName}` || "",
-            nationality: app.section1_personal?.nationality || app.personalInfo?.nationality || "",
-            date_of_birth: app.section1_personal?.date_of_birth || app.personalInfo?.dateOfBirth || "",
-            phone_number: app.section1_personal?.phone_number || app.personalInfo?.phone || "",
-            personal_email: app.section1_personal?.personal_email || app.personalInfo?.email || "",
+            full_name: app.section1_personal?.full_name || "",
+            gender: app.section1_personal?.gender || "",
+            gender_other: app.section1_personal?.gender_other || "",
+            nationality: app.section1_personal?.nationality || "",
+            date_of_birth: app.section1_personal?.date_of_birth || "",
+            phone_number: app.section1_personal?.phone_number || "",
+            personal_email: app.section1_personal?.personal_email || "",
             cambridge_email: app.section1_personal?.cambridge_email || "",
-            college: app.section1_personal?.college || app.personalInfo?.college || "",
+            college: app.section1_personal?.college || "",
             subject: app.section1_personal?.subject || "",
             subject_other: app.section1_personal?.subject_other || "",
-            year_of_study: app.section1_personal?.year_of_study || app.personalInfo?.yearOfStudy || "",
+            year_of_study: app.section1_personal?.year_of_study || "",
             year_of_study_other: app.section1_personal?.year_of_study_other || "",
         },
         section2_about_you: {
-            tell_us_about_yourself: app.section2_about_you?.tell_us_about_yourself || app.essays?.motivation || "",
+            tell_us_about_yourself: app.section2_about_you?.tell_us_about_yourself || "",
             additional_file_url: app.section2_about_you?.additional_file_url || "",
         },
         section3_teaching: {
-            interest_and_motivation: app.section3_teaching?.interest_and_motivation || "",
-            experience_and_strengths: app.section3_teaching?.experience_and_strengths || app.essays?.experience || "",
+            subject_passion: app.section3_teaching?.subject_passion || "",
+            academy_motivation: app.section3_teaching?.academy_motivation || "",
         },
         section4_travel: {
             excitement_about_china: app.section4_travel?.excitement_about_china || "",
@@ -105,6 +107,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
 
         // Section 1 rules
         if (!section1_personal.full_name) errors.push("Full Name");
+        if (!section1_personal.gender || (section1_personal.gender === "Other" && !section1_personal.gender_other)) errors.push("Gender");
         if (!section1_personal.nationality) errors.push("Nationality");
         if (!section1_personal.date_of_birth) errors.push("Date of Birth");
         if (!section1_personal.phone_number) errors.push("Phone Number");
@@ -119,16 +122,16 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
         if (countWords(section2_about_you.tell_us_about_yourself) > 300) errors.push("About Yourself (Word Limit)");
 
         // Section 3
-        if (!section3_teaching.interest_and_motivation) errors.push("Teaching Motivation");
-        if (countWords(section3_teaching.interest_and_motivation) > 250) errors.push("Teaching Motivation (Word Limit)");
-        if (!section3_teaching.experience_and_strengths) errors.push("Teaching Experience");
-        if (countWords(section3_teaching.experience_and_strengths) > 200) errors.push("Teaching Experience (Word Limit)");
+        if (!section3_teaching.subject_passion) errors.push("Subject Passion");
+        if (countWords(section3_teaching.subject_passion) > 300) errors.push("Subject Passion (Word Limit)");
+        if (!section3_teaching.academy_motivation) errors.push("Academy Motivation");
+        if (countWords(section3_teaching.academy_motivation) > 300) errors.push("Academy Motivation (Word Limit)");
 
         // Section 4
         if (!section4_travel.excitement_about_china) errors.push("Excitement about China");
-        if (countWords(section4_travel.excitement_about_china) > 200) errors.push("Excitement about China (Word Limit)");
+        if (countWords(section4_travel.excitement_about_china) > 300) errors.push("Excitement about China (Word Limit)");
         if (!section4_travel.group_dynamics) errors.push("Group Dynamics");
-        if (countWords(section4_travel.group_dynamics) > 250) errors.push("Group Dynamics (Word Limit)");
+        if (countWords(section4_travel.group_dynamics) > 300) errors.push("Group Dynamics (Word Limit)");
 
         // Section 5
         if (section5_availability.dietary_restrictions.length === 0) errors.push("Dietary Restrictions");
@@ -213,17 +216,15 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
     };
 
     const sectionsData = [
-        { id: 1, title: "Personal Details" },
-        { id: 2, title: "About You" },
-        { id: 3, title: "Teaching" },
-        { id: 4, title: "Travel & China" },
-        { id: 5, title: "Availability & Logistics" }
-    ];
-
-    return (
+        { id: 1, title: "Personal Profile" },
+        { id: 2, title: "Your Story" },
+        { id: 3, title: "The Academy" },
+        { id: 4, title: "China Experience" },
+        { id: 5, title: "Logistics & Details" }
+    ]; return (
         <div className="max-w-4xl mx-auto w-full space-y-8">
             {/* Progress Bar & Header */}
-            <div className="bg-white rounded-xl shadow-sm border p-4 md:p-6 sticky top-20 z-40">
+            <div className="bg-white/80 backdrop-blur-md rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.05)] border border-slate-200/50 p-4 md:p-6 sticky top-20 z-40 transition-all">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-bold text-slate-800">
                         {isReadOnly ? "Your Application" : "Application Form"}
@@ -240,8 +241,8 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                             key={s.id}
                             onClick={() => !isReadOnly && paginate(s.id > currentSection ? 1 : -1, s.id as FormSection)}
                             className={cn(
-                                "h-full flex-1 rounded-full transition-all duration-300 cursor-pointer",
-                                s.id === currentSection ? "bg-blue-600" : s.id < currentSection ? "bg-blue-200" : "bg-slate-100"
+                                "h-2 w-full rounded-full transition-colors duration-300 cursor-pointer",
+                                s.id === currentSection ? "bg-[#1A4D2E]" : s.id < currentSection ? "bg-[#8AC1A6]" : "bg-slate-100"
                             )}
                         />
                     ))}
@@ -250,7 +251,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                 {/* Mini mobile nav text */}
                 <div className="mt-3 hidden md:grid grid-cols-5 gap-2">
                     {sectionsData.map(s => (
-                        <div key={s.id} className={cn("text-center text-xs text-slate-500 font-medium transition-colors cursor-pointer", currentSection === s.id ? "text-blue-600 font-bold" : "hover:text-slate-800")}
+                        <div key={s.id} className={cn("text-center text-xs text-slate-500 font-medium transition-colors cursor-pointer", currentSection === s.id ? "text-[#1A4D2E] font-bold" : "hover:text-slate-800")}
                             onClick={() => !isReadOnly && paginate(s.id > currentSection ? 1 : -1, s.id as FormSection)}>
                             {s.title}
                         </div>
@@ -272,11 +273,30 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                     >
                         {/* SECTION 1 */}
                         {currentSection === 1 && (
-                            <Section number="01" title="Personal Details" titleEn="Basic Information">
+                            <Section number="01" title="Personal Profile" titleEn="Let's start with the basics">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
                                         {renderFieldLabel("Full Name")}
                                         <Input value={formData.section1_personal.full_name} onChange={e => updateField('section1_personal', 'full_name', e.target.value)} disabled={isReadOnly} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        {renderFieldLabel("Gender")}
+                                        <Select disabled={isReadOnly} value={formData.section1_personal.gender} onValueChange={v => {
+                                            updateField('section1_personal', 'gender', v);
+                                            if (v !== "Other") {
+                                                updateField('section1_personal', 'gender_other', "");
+                                            }
+                                        }}>
+                                            <SelectTrigger><SelectValue placeholder="Select your gender" /></SelectTrigger>
+                                            <SelectContent>
+                                                {GENDER_OPTIONS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        {formData.section1_personal.gender === "Other" && (
+                                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="pt-2">
+                                                <Input placeholder="Please specify your gender" value={formData.section1_personal.gender_other || ""} onChange={e => updateField('section1_personal', 'gender_other', e.target.value)} disabled={isReadOnly} />
+                                            </motion.div>
+                                        )}
                                     </div>
                                     <div className="space-y-2">
                                         {renderFieldLabel("Nationality")}
@@ -381,7 +401,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                                                                         type="button"
                                                                         className={cn(
                                                                             "w-full px-2 py-1.5 rounded-sm text-sm flex items-center justify-between hover:bg-slate-100 text-left",
-                                                                            formData.section1_personal.subject === subject && "bg-blue-50 text-blue-700 font-medium"
+                                                                            formData.section1_personal.subject === subject && "bg-[#E8F3E8] text-[#0F2E18] font-medium"
                                                                         )}
                                                                         onClick={() => {
                                                                             updateField('section1_personal', 'subject', subject);
@@ -414,7 +434,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
 
                                     <div className="space-y-2">
                                         {renderFieldLabel("Year of Study")}
-                                        <Select disabled={isReadOnly} value={formData.section1_personal.year_of_study} onValueChange={v => updateField('section1_personal', 'year_of_study', v)}>
+                                        <Select disabled={isReadOnly} value={formData.section1_personal.year_of_study || undefined} onValueChange={v => updateField('section1_personal', 'year_of_study', v)}>
                                             <SelectTrigger><SelectValue placeholder="Select year of study" /></SelectTrigger>
                                             <SelectContent>
                                                 {YEAR_OF_STUDY_OPTIONS.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
@@ -432,7 +452,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
 
                         {/* SECTION 2 */}
                         {currentSection === 2 && (
-                            <Section number="02" title="About You" titleEn="Who you are">
+                            <Section number="02" title="Your Story" titleEn="Beyond the CV">
                                 <div className="space-y-8">
                                     <div className="space-y-3">
                                         {renderFieldLabel("Tell us about yourself.")}
@@ -469,7 +489,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                                         {formData.section2_about_you.additional_file_url && (
                                             <div className="mt-2 flex items-center gap-2">
                                                 <div className="text-sm border border-slate-200 bg-white px-3 py-1.5 rounded-md flex items-center text-slate-700">
-                                                    <a href={formData.section2_about_you.additional_file_url} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-600 truncate max-w-[200px]">View Uploaded File</a>
+                                                    <a href={formData.section2_about_you.additional_file_url} target="_blank" rel="noopener noreferrer" className="hover:underline text-[#1A4D2E] truncate max-w-[200px]">View Uploaded File</a>
                                                 </div>
                                                 {!isReadOnly && (
                                                     <Button type="button" variant="ghost" size="sm" onClick={() => updateField('section2_about_you', 'additional_file_url', '')} className="text-red-500 h-8 px-2">Remove</Button>
@@ -483,36 +503,36 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
 
                         {/* SECTION 3 */}
                         {currentSection === 3 && (
-                            <Section number="03" title="Teaching" titleEn="Academy Programme">
-                                <div className="p-4 bg-blue-50 text-blue-800 rounded-lg text-sm border border-blue-100 mb-6 italic leading-relaxed">
-                                    As part of the Jianshan Scholarship, selected participants will join our Academy programme, where you will have the opportunity to engage with local students through cultural exchange sessions. This is a core part of the experience, and we&apos;d love to learn more about your interest and background in this area.
+                            <Section number="03" title="The Academy" titleEn="Passion for Teaching">
+                                <div className="p-4 bg-[#E8F3E8] text-[#0F2E18] rounded-lg text-sm border border-[#1A4D2E]/20 mb-6 italic leading-relaxed">
+                                    As part of the Jianshan Scholarship, selected participants will join our Academy programme, where you will have the opportunity to engage with local students through academic and cultural exchange sessions. This is a core part of the experience, and we&apos;d love to learn more about your interest and background in this area.
                                 </div>
                                 <div className="space-y-8">
                                     <div className="space-y-3">
-                                        {renderFieldLabel("What draws you to the Academy programme, and why are you interested in engaging with students through cultural exchange?")}
+                                        {renderFieldLabel("We'd love to learn about your passion for your chosen subject. What is the story behind your choice? What initially sparked your interest, and how has your understanding of the discipline evolved since you began your university studies?")}
                                         <div className="flex justify-end">
                                             <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1">
-                                                {renderWordCount(countWords(formData.section3_teaching.interest_and_motivation), 250)}
+                                                {renderWordCount(countWords(formData.section3_teaching.subject_passion), 300)}
                                             </div>
                                         </div>
                                         <Textarea
-                                            value={formData.section3_teaching.interest_and_motivation}
-                                            onChange={e => updateField('section3_teaching', 'interest_and_motivation', e.target.value)}
+                                            value={formData.section3_teaching.subject_passion}
+                                            onChange={e => updateField('section3_teaching', 'subject_passion', e.target.value)}
                                             className="min-h-[150px]"
                                             disabled={isReadOnly}
                                         />
                                     </div>
                                     <div className="space-y-3">
-                                        {renderFieldLabel("What relevant experience or strengths would you bring to the programme?")}
-                                        <p className="text-sm text-slate-500 italic">This could include teaching, tutoring, mentoring, public speaking, workshop facilitation, or any experience working with young people.</p>
+                                        {renderFieldLabel("What is your primary motivation for joining the Academy programme?")}
+                                        <p className="text-sm text-slate-500 italic">Whether it is the opportunity for cultural exchange, a passion for teaching and mentorship, or another personal drive, we&apos;d love to hear what makes this experience meaningful to you.</p>
                                         <div className="flex justify-end">
                                             <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1">
-                                                {renderWordCount(countWords(formData.section3_teaching.experience_and_strengths), 200)}
+                                                {renderWordCount(countWords(formData.section3_teaching.academy_motivation), 300)}
                                             </div>
                                         </div>
                                         <Textarea
-                                            value={formData.section3_teaching.experience_and_strengths}
-                                            onChange={e => updateField('section3_teaching', 'experience_and_strengths', e.target.value)}
+                                            value={formData.section3_teaching.academy_motivation}
+                                            onChange={e => updateField('section3_teaching', 'academy_motivation', e.target.value)}
                                             className="min-h-[150px]"
                                             disabled={isReadOnly}
                                         />
@@ -523,13 +543,13 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
 
                         {/* SECTION 4 */}
                         {currentSection === 4 && (
-                            <Section number="04" title="Travel & China" titleEn="Expectations & Dynamics">
+                            <Section number="04" title="China Experience" titleEn="Cultural Exchange & Connection">
                                 <div className="space-y-8">
                                     <div className="space-y-3">
                                         {renderFieldLabel("What excites you most about visiting China?")}
                                         <div className="flex justify-end">
                                             <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1">
-                                                {renderWordCount(countWords(formData.section4_travel.excitement_about_china), 200)}
+                                                {renderWordCount(countWords(formData.section4_travel.excitement_about_china), 300)}
                                             </div>
                                         </div>
                                         <Textarea
@@ -544,7 +564,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                                         <p className="text-sm text-slate-500 italic">For example, you could tell us about your role in group settings, your travel style, or how you connect with others on the road.</p>
                                         <div className="flex justify-end">
                                             <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1">
-                                                {renderWordCount(countWords(formData.section4_travel.group_dynamics), 250)}
+                                                {renderWordCount(countWords(formData.section4_travel.group_dynamics), 300)}
                                             </div>
                                         </div>
                                         <Textarea
@@ -560,11 +580,14 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
 
                         {/* SECTION 5 */}
                         {currentSection === 5 && (
-                            <Section number="05" title="Availability & Logistics" titleEn="Logistics">
+                            <Section number="05" title="Logistics & Details" titleEn="Making it happen">
                                 <div className="space-y-8">
                                     <div className="space-y-3">
                                         {renderFieldLabel("Please select all dates you are available in July and August 2026.", false)}
-                                        <p className="text-sm text-slate-500 italic">You can click individual dates, drag to select a range, or use the quick-select options below. If your availability is uncertain, you may leave this blank for now.</p>
+                                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-600 space-y-2">
+                                            <p className="italic text-slate-500 font-medium">We will be running multiple programs between July and August 2026; each program typically involves 7 days in the Academy followed by an 11-day trip.</p>
+                                            <p className="italic text-slate-500 font-medium">Please select all dates you are available. We will allocate participants to specific programs based on your indicated availability. You can click individual dates, drag to select a range, or use the quick-select options below.</p>
+                                        </div>
                                         <AvailabilityCalendar
                                             selectedDates={formData.section5_availability.available_dates}
                                             onChange={(dates) => updateField('section5_availability', 'available_dates', dates)}
@@ -577,7 +600,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                                             {DIETARY_RESTRICTIONS.map(d => (
                                                 <label key={d} className={cn(
                                                     "flex items-center gap-2 rounded-lg border p-3 cursor-pointer transition-all text-sm",
-                                                    formData.section5_availability.dietary_restrictions.includes(d) ? "border-blue-500 bg-blue-50 text-blue-700 font-medium shadow-sm" : "border-slate-200 hover:border-slate-300",
+                                                    formData.section5_availability.dietary_restrictions.includes(d) ? "border-[#1A4D2E] bg-[#E8F3E8] text-[#0F2E18] font-medium shadow-sm" : "border-slate-200 hover:border-slate-300",
                                                     isReadOnly && "cursor-default"
                                                 )}>
                                                     <Checkbox
@@ -635,7 +658,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                     {!isReadOnly && (
                         <>
-                            <Button variant="outline" onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
+                            <Button variant="outline" onClick={handleSave} disabled={saving} className="w-full sm:w-auto border-[#1A4D2E]/20 text-[#1A4D2E] hover:bg-[#E8F3E8] hover:text-[#0F2E18] transition-colors">
                                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                                 Save Draft
                             </Button>
@@ -650,24 +673,27 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
 
                 <div className="flex gap-3 w-full sm:w-auto">
                     {currentSection > 1 && (
-                        <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => paginate(-1, (currentSection - 1) as FormSection)}>
+                        <Button variant="outline" className="flex-1 sm:flex-none border-[#1A4D2E]/20 text-[#1A4D2E] hover:bg-[#E8F3E8] hover:text-[#0F2E18] transition-colors" onClick={() => paginate(-1, (currentSection - 1) as FormSection)}>
                             <ArrowLeft className="w-4 h-4 mr-1" /> Prev
                         </Button>
                     )}
 
                     {currentSection < 5 ? (
-                        <Button className="flex-1 sm:flex-none" onClick={() => paginate(1, (currentSection + 1) as FormSection)}>
+                        <Button className="flex-1 sm:flex-none bg-[#1A4D2E] hover:bg-[#0F2E18] text-[#FDFBF7] transition-colors" onClick={() => paginate(1, (currentSection + 1) as FormSection)}>
                             Next <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
                     ) : (
                         !isReadOnly && (
                             <Button
                                 onClick={handleSubmit}
-                                disabled={submitting}
-                                className="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all"
+                                disabled={saving || submitting}
+                                className="flex-1 sm:flex-none bg-[#1A4D2E] hover:bg-[#0F2E18] text-[#FDFBF7] hover:shadow-lg transition-all"
                             >
-                                {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
-                                Submit Application
+                                {submitting ? (
+                                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting...</>
+                                ) : (
+                                    <><Send className="w-4 h-4 mr-2" /> Submit Application</>
+                                )}
                             </Button>
                         )
                     )}

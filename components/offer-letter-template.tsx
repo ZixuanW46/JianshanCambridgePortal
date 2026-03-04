@@ -16,7 +16,7 @@ interface OfferLetterTemplateProps {
 
 export const OfferLetterTemplate = React.forwardRef<HTMLDivElement, OfferLetterTemplateProps>(
     function OfferLetterTemplate({ application }, ref) {
-        const name = [application.personalInfo?.firstName, application.personalInfo?.lastName].filter(Boolean).join(' ') || "Applicant";
+        const name = application.section1_personal?.full_name || "Applicant";
         const year = "2026";
         const decisionDate = formatDate(application.decisionReleasedAt);
         const appId = application.id?.slice(0, 8).toUpperCase() || "";

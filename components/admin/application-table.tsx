@@ -26,15 +26,26 @@ interface AdminApplicationTableProps {
     applications: Application[];
 }
 
-const decisionOptions = [
+const allDecisionOptions = [
+    { value: 'shortlisted', label: 'Shortlisted', color: 'bg-purple-100 text-purple-700 hover:bg-purple-200' },
     { value: 'accepted', label: 'Accepted', color: 'bg-green-100 text-green-700 hover:bg-green-200' },
     { value: 'rejected', label: 'Rejected', color: 'bg-red-100 text-red-700 hover:bg-red-200' },
     { value: 'waitlisted', label: 'Waitlist', color: 'bg-amber-100 text-amber-700 hover:bg-amber-200' },
 ];
 
+const getDecisionOptions = (status: string) => {
+    if (status === 'under_review') {
+        return allDecisionOptions.filter(o => o.value === 'shortlisted' || o.value === 'rejected');
+    }
+    if (status === 'round_2_submitted' || status === 'round_2_under_review') {
+        return allDecisionOptions.filter(o => o.value === 'accepted' || o.value === 'rejected' || o.value === 'waitlisted');
+    }
+    return allDecisionOptions;
+};
+
 const getDecisionColor = (decision: string | null | undefined) => {
     if (!decision) return 'bg-slate-100 text-slate-700';
-    const option = decisionOptions.find(opt => opt.value === decision);
+    const option = allDecisionOptions.find(opt => opt.value === decision);
     return option ? option.color : 'bg-slate-100 text-slate-700';
 };
 
@@ -55,8 +66,8 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
     const safeApps = localApps || [];
     const filteredApps = safeApps.filter(app => {
         const searchTerm = search.toLowerCase();
-        const fullName = [app.personalInfo?.firstName, app.personalInfo?.lastName].filter(Boolean).join(' ').toLowerCase();
-        const email = (app.personalInfo?.email || "").toLowerCase();
+        const fullName = (app.section1_personal?.full_name || "").toLowerCase();
+        const email = (app.section1_personal?.personal_email || app.section1_personal?.cambridge_email || "").toLowerCase();
         const searchMatch = fullName.includes(searchTerm) || email.includes(searchTerm);
         const statusMatch = statusFilter === "all" || app.status === statusFilter;
         let decisionMatch = true;
@@ -71,8 +82,8 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
     const sortedApps = [...filteredApps].sort((a, b) => {
         const direction = sortConfig.direction === 'asc' ? 1 : -1;
         if (sortConfig.key === 'name') {
-            const nameA = [a.personalInfo?.firstName, a.personalInfo?.lastName].filter(Boolean).join(' ');
-            const nameB = [b.personalInfo?.firstName, b.personalInfo?.lastName].filter(Boolean).join(' ');
+            const nameA = a.section1_personal?.full_name || "";
+            const nameB = b.section1_personal?.full_name || "";
             return nameA.localeCompare(nameB) * direction;
         }
         if (sortConfig.key === 'submitted') {
@@ -108,7 +119,7 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
         }));
         setUpdatingParams(userId);
         try {
-            if (decision === null || ['accepted', 'rejected', 'waitlisted'].includes(decision!)) {
+            if (decision === null || ['shortlisted', 'accepted', 'rejected', 'waitlisted'].includes(decision!)) {
                 await dbService.setInternalDecision(userId, decision as any);
                 router.refresh();
             }
@@ -122,7 +133,7 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
     };
 
     const isEligibleForRelease = (app: Application) => {
-        return app.status === 'under_review' && !!app.adminData?.internalDecision;
+        return ['under_review', 'round_2_submitted', 'round_2_under_review'].includes(app.status) && !!app.adminData?.internalDecision;
     };
 
     const eligibleApps = filteredApps.filter(isEligibleForRelease);
@@ -243,7 +254,7 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                                     <DropdownMenuContent align="start">
                                         <DropdownMenuLabel>Filter Status</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        {['all', 'draft', 'submitted', 'under_review', 'accepted', 'enrolled', 'rejected', 'waitlisted'].map(s => (
+                                        {['all', 'draft', 'submitted', 'under_review', 'shortlisted', 'round_2_submitted', 'round_2_under_review', 'accepted', 'enrolled', 'rejected', 'waitlisted'].map(s => (
                                             <DropdownMenuCheckboxItem key={s} checked={statusFilter === s} onCheckedChange={() => setStatusFilter(s)}>
                                                 {s === 'all' ? 'All Statuses' : s.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                                             </DropdownMenuCheckboxItem>
@@ -259,7 +270,7 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                                     <DropdownMenuContent align="start">
                                         <DropdownMenuLabel>Filter Decision</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        {[{ v: 'all', l: 'All' }, { v: 'undecided', l: 'Undecided' }, { v: 'accepted', l: 'Accepted' }, { v: 'rejected', l: 'Rejected' }, { v: 'waitlisted', l: 'Waitlisted' }].map(d => (
+                                        {[{ v: 'all', l: 'All' }, { v: 'undecided', l: 'Undecided' }, { v: 'shortlisted', l: 'Shortlisted' }, { v: 'accepted', l: 'Accepted' }, { v: 'rejected', l: 'Rejected' }, { v: 'waitlisted', l: 'Waitlisted' }].map(d => (
                                             <DropdownMenuCheckboxItem key={d.v} checked={decisionFilter === d.v} onCheckedChange={() => setDecisionFilter(d.v)}>{d.l}</DropdownMenuCheckboxItem>
                                         ))}
                                     </DropdownMenuContent>
@@ -289,19 +300,19 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                                     </TableCell>
                                     <TableCell className="px-6 py-4">
                                         <div>
-                                            <div className="text-slate-900 font-medium">{[app.personalInfo?.firstName, app.personalInfo?.lastName].filter(Boolean).join(' ') || "No Name"}</div>
-                                            <div className="text-slate-500 text-sm">{app.personalInfo?.email || "No Email"}</div>
+                                            <div className="text-slate-900 font-medium">{app.section1_personal?.full_name || "No Name"}</div>
+                                            <div className="text-slate-500 text-sm">{app.section1_personal?.personal_email || app.section1_personal?.cambridge_email || "No Email"}</div>
                                         </div>
                                     </TableCell>
                                     <TableCell className="px-6 py-4"><StatusBadge status={app.status} /></TableCell>
                                     <TableCell className="px-6 py-4">
                                         {app.status === 'draft' ? (
                                             <span className="text-slate-400">-</span>
-                                        ) : ['submitted', 'under_review'].includes(app.status) ? (
+                                        ) : ['submitted', 'under_review', 'shortlisted', 'round_2_submitted', 'round_2_under_review'].includes(app.status) ? (
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <button className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs transition-colors font-medium outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 ${getDecisionColor(app.adminData?.internalDecision)} ${updatingParams === app.id ? 'opacity-50 cursor-wait' : ''}`} disabled={updatingParams === app.id}>
-                                                        {decisionOptions.find(opt => opt.value === app.adminData?.internalDecision)?.label || 'Pending'}
+                                                        {allDecisionOptions.find(opt => opt.value === app.adminData?.internalDecision)?.label || 'Pending'}
                                                         {updatingParams === app.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <ChevronDown className="w-3 h-3" />}
                                                     </button>
                                                 </DropdownMenuTrigger>
@@ -309,7 +320,7 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                                                     <DropdownMenuItem onClick={() => handleDecisionUpdate(app.id!, null)} className="cursor-pointer">
                                                         <span className="inline-block w-2 h-2 rounded-full mr-2 bg-slate-300"></span> Undecided
                                                     </DropdownMenuItem>
-                                                    {decisionOptions.map(option => (
+                                                    {getDecisionOptions(app.status).map(option => (
                                                         <DropdownMenuItem key={option.value} onClick={() => handleDecisionUpdate(app.id!, option.value)} className="cursor-pointer">
                                                             <span className={`inline-block w-2 h-2 rounded-full mr-2 ${option.color.split(' ')[0]}`}></span> {option.label}
                                                         </DropdownMenuItem>
@@ -318,7 +329,7 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                                             </DropdownMenu>
                                         ) : (
                                             <button className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium opacity-50 cursor-not-allowed ${getDecisionColor(app.adminData?.internalDecision)}`} disabled>
-                                                {decisionOptions.find(opt => opt.value === app.adminData?.internalDecision)?.label || 'Pending'}
+                                                {allDecisionOptions.find(opt => opt.value === app.adminData?.internalDecision)?.label || 'Pending'}
                                             </button>
                                         )}
                                     </TableCell>
@@ -332,7 +343,7 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                                         <div className="flex justify-end gap-1">
                                             <Link href={`/admin/application?id=${app.id}`}><Button variant="ghost" size="icon" className="h-8 w-8 text-slate-700 hover:text-slate-900 hover:bg-slate-100" title="View"><Eye className="h-4 w-4" /></Button></Link>
                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Reset to Draft" onClick={() => setConfirmAction({ type: 'reset', userId: app.id! })}><RefreshCcw className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50" title="Progress to Review" disabled={['accepted', 'enrolled', 'under_review', 'rejected', 'waitlisted'].includes(app.status)} onClick={() => setConfirmAction({ type: 'progress', userId: app.id! })}><Play className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50" title="Progress to Review" disabled={['accepted', 'enrolled', 'under_review', 'rejected', 'waitlisted', 'shortlisted', 'round_2_submitted', 'round_2_under_review'].includes(app.status)} onClick={() => setConfirmAction({ type: 'progress', userId: app.id! })}><Play className="h-4 w-4" /></Button>
                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" title="Delete" onClick={() => setConfirmAction({ type: 'delete', userId: app.id! })}><Trash2 className="h-4 w-4" /></Button>
                                         </div>
                                     </TableCell>

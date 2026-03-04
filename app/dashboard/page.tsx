@@ -76,9 +76,13 @@ function ProgressTimeline({ app }: { app: Application }) {
     const { status, submittedAt, createdAt, decisionReleasedAt } = app;
 
     const isSubmitted = status !== 'draft';
-    const isUnderReview = ['under_review', 'accepted', 'rejected', 'waitlisted', 'enrolled'].includes(status);
+    const isInitialReview = ['under_review', 'shortlisted', 'round_2_submitted', 'round_2_under_review', 'accepted', 'rejected', 'waitlisted', 'enrolled'].includes(status);
+    const isRound2Invited = ['shortlisted', 'round_2_submitted', 'round_2_under_review', 'accepted', 'waitlisted', 'enrolled'].includes(status) || !!app.section6_round_2;
+    const isRound2Submitted = ['round_2_submitted', 'round_2_under_review', 'accepted', 'rejected', 'waitlisted', 'enrolled'].includes(status) && !!app.section6_round_2;
     const isDecisionReleased = ['accepted', 'rejected', 'waitlisted', 'enrolled'].includes(status);
     const isEnrolled = ['enrolled'].includes(status);
+
+    const showRound2Steps = status !== 'rejected' || !!app.section6_round_2;
 
     return (
         <div className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-slate-100">
@@ -143,7 +147,7 @@ function ProgressTimeline({ app }: { app: Application }) {
                     )}
                     <div className={cn(
                         "w-[2px] h-full min-h-[40px]",
-                        isUnderReview ? "bg-primary" : "bg-muted"
+                        isInitialReview ? "bg-primary" : "bg-muted"
                     )}></div>
                 </div>
                 {/* Text Column */}
@@ -154,14 +158,14 @@ function ProgressTimeline({ app }: { app: Application }) {
                     </p>
                 </div>
 
-                {/* --- Step 4: Under Review --- */}
+                {/* --- Step 4: Initial Review --- */}
                 {/* Icon Column */}
                 <div className="flex flex-col items-center gap-1 pt-1">
-                    {isDecisionReleased ? (
+                    {isRound2Invited || isDecisionReleased ? (
                         <div className="size-8 rounded-full bg-primary flex items-center justify-center text-white z-10">
                             <Check size={20} className="text-white" strokeWidth={3} />
                         </div>
-                    ) : isUnderReview ? (
+                    ) : isInitialReview ? (
                         <div className="size-8 rounded-full border-[3px] border-accent bg-white relative z-10 shadow-[0_0_15px_rgba(225,177,104,0.4)] flex items-center justify-center">
                             <div className="size-2.5 bg-accent rounded-full animate-pulse"></div>
                         </div>
@@ -173,23 +177,98 @@ function ProgressTimeline({ app }: { app: Application }) {
 
                     <div className={cn(
                         "w-[2px] h-full min-h-[40px]",
-                        isDecisionReleased ? "bg-primary" : "bg-muted"
+                        (isRound2Invited || (isDecisionReleased && !showRound2Steps)) ? "bg-primary" : "bg-muted"
                     )}></div>
                 </div>
                 {/* Text Column */}
                 <div className="flex flex-col pb-8 pt-1">
                     <p className={cn(
                         "text-base font-bold leading-normal",
-                        isUnderReview && !isDecisionReleased ? "text-primary dark:text-accent" :
-                            !isUnderReview ? "text-muted-foreground" : "text-foreground"
+                        isInitialReview && !(isRound2Invited || isDecisionReleased) ? "text-primary dark:text-accent" :
+                            !isInitialReview ? "text-muted-foreground" : "text-foreground"
                     )}>
-                        Under Review
+                        Initial Review
                     </p>
                     <p className="text-sm text-muted-foreground font-normal leading-normal">
-                        {isUnderReview && !isDecisionReleased ? "Our team is reviewing your application" :
-                            isDecisionReleased ? "Review Completed" : "Awaiting Review"}
+                        {isInitialReview && !(isRound2Invited || isDecisionReleased) ? "Reviewing round 1 application" :
+                            (isRound2Invited || isDecisionReleased) ? "Review Completed" : "Awaiting Review"}
                     </p>
                 </div>
+
+                {/* Conditional Round 2 Steps */}
+                {showRound2Steps && (
+                    <>
+                        {/* --- Step 4.5: Round 2 --- */}
+                        {/* Icon Column */}
+                        <div className="flex flex-col items-center gap-1 pt-1">
+                            {isRound2Submitted ? (
+                                <div className="size-8 rounded-full bg-primary flex items-center justify-center text-white z-10">
+                                    <Check size={20} className="text-white" strokeWidth={3} />
+                                </div>
+                            ) : isRound2Invited ? (
+                                <div className="size-8 rounded-full border-[3px] border-accent bg-white relative z-10 shadow-[0_0_15px_rgba(225,177,104,0.4)] flex items-center justify-center">
+                                    <div className="size-2.5 bg-accent rounded-full animate-pulse"></div>
+                                </div>
+                            ) : (
+                                <div className="size-8 rounded-full bg-muted border-2 border-border flex items-center justify-center text-muted-foreground z-10">
+                                    <div className="h-2 w-2 rounded-full bg-muted-foreground/30"></div>
+                                </div>
+                            )}
+                            <div className={cn(
+                                "w-[2px] h-full min-h-[40px]",
+                                isRound2Submitted ? "bg-primary" : "bg-muted"
+                            )}></div>
+                        </div>
+                        {/* Text Column */}
+                        <div className="flex flex-col pb-8 pt-1">
+                            <p className={cn(
+                                "text-base font-bold leading-normal",
+                                isRound2Invited && !isRound2Submitted ? "text-primary dark:text-accent" :
+                                    !isRound2Invited ? "text-muted-foreground" : "text-foreground"
+                            )}>
+                                Round 2 Submission
+                            </p>
+                            <p className="text-sm text-muted-foreground font-normal leading-normal">
+                                {isRound2Invited && !isRound2Submitted ? "Please submit Session Design & Video" :
+                                    isRound2Submitted ? "Round 2 Submitted" : "Session Design & Video"}
+                            </p>
+                        </div>
+
+                        {/* --- Step 4.75: Round 2 Review --- */}
+                        <div className="flex flex-col items-center gap-1 pt-1">
+                            {isDecisionReleased ? (
+                                <div className="size-8 rounded-full bg-primary flex items-center justify-center text-white z-10">
+                                    <Check size={20} className="text-white" strokeWidth={3} />
+                                </div>
+                            ) : isRound2Submitted ? (
+                                <div className="size-8 rounded-full border-[3px] border-accent bg-white relative z-10 shadow-[0_0_15px_rgba(225,177,104,0.4)] flex items-center justify-center">
+                                    <div className="size-2.5 bg-accent rounded-full animate-pulse"></div>
+                                </div>
+                            ) : (
+                                <div className="size-8 rounded-full bg-muted border-2 border-border flex items-center justify-center text-muted-foreground z-10">
+                                    <div className="h-2 w-2 rounded-full bg-muted-foreground/30"></div>
+                                </div>
+                            )}
+                            <div className={cn(
+                                "w-[2px] h-full min-h-[40px]",
+                                isDecisionReleased ? "bg-primary" : "bg-muted"
+                            )}></div>
+                        </div>
+                        <div className="flex flex-col pb-8 pt-1">
+                            <p className={cn(
+                                "text-base font-bold leading-normal",
+                                isRound2Submitted && !isDecisionReleased ? "text-primary dark:text-accent" :
+                                    !isRound2Submitted ? "text-muted-foreground" : "text-foreground"
+                            )}>
+                                Final Review
+                            </p>
+                            <p className="text-sm text-muted-foreground font-normal leading-normal">
+                                {isRound2Submitted && !isDecisionReleased ? "Reviewing your full application" :
+                                    isDecisionReleased ? "Review Completed" : "Awaiting Round 2"}
+                            </p>
+                        </div>
+                    </>
+                )}
 
                 {/* --- Step 5: Final Decision --- */}
                 {/* Icon Column */}
@@ -262,7 +341,7 @@ function ApplicationDetails({ app }: { app: Application }) {
                     <User className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
                         <p className="text-xs uppercase font-bold text-muted-foreground">Name</p>
-                        <p className="text-sm font-medium">{app.section1_personal?.full_name || [app.personalInfo?.firstName, app.personalInfo?.lastName].filter(Boolean).join(' ') || <span className="italic text-muted-foreground">Not Filled</span>}</p>
+                        <p className="text-sm font-medium">{app.section1_personal?.full_name || <span className="italic text-muted-foreground">Not Filled</span>}</p>
                     </div>
                 </div>
                 <div className="h-px bg-border w-full"></div>
@@ -315,8 +394,8 @@ export default function DashboardPage() {
         if (!offerLetterRef.current || !app) return;
         setDownloading(true);
         try {
-            const fullName = app.section1_personal?.full_name || [app.personalInfo?.firstName, app.personalInfo?.lastName].filter(Boolean).join(' ');
-            await generateOfferPdf(offerLetterRef.current, fullName || "Applicant");
+            const fullName = app.section1_personal?.full_name || "Applicant";
+            await generateOfferPdf(offerLetterRef.current, fullName);
         } catch (err) {
             console.error("PDF generation failed:", err);
         } finally {
@@ -447,6 +526,27 @@ export default function DashboardPage() {
                                             </Link>
                                         </Button>
                                     </div>
+                                </>
+                            ) : app.status === 'shortlisted' ? (
+                                <>
+                                    <h2 className="text-2xl md:text-3xl font-bold leading-tight">You&apos;re Shortlisted! ✨</h2>
+                                    <p className="text-muted-foreground leading-relaxed">
+                                        Congratulations! You have been shortlisted for the next round. Please submit your session design and a short video introduction.
+                                    </p>
+                                    <div className="mt-4 pt-4 border-t flex gap-4">
+                                        <Button size="lg" asChild>
+                                            <Link href="/apply-round2">
+                                                Complete Round 2 <ArrowRight className="ml-2 h-5 w-5" strokeWidth={3} />
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </>
+                            ) : ['round_2_submitted', 'round_2_under_review'].includes(app.status) ? (
+                                <>
+                                    <h2 className="text-2xl md:text-3xl font-bold leading-tight">Round 2 Under Review 👀</h2>
+                                    <p className="text-muted-foreground leading-relaxed">
+                                        We have received your Session Design & Video. Our team is reviewing it and we will release the final decision soon.
+                                    </p>
                                 </>
                             ) : (
                                 // Default: Submitted or Under Review

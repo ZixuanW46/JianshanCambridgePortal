@@ -96,7 +96,7 @@ export default function ApplyPage() {
             {/* Header / Nav */}
             <div className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50 transition-all duration-300">
                 <div className="container max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')} className="text-slate-600 hover:text-slate-900 -ml-2 rounded-full">
+                    <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')} className="text-slate-600 hover:text-slate-900 hover:bg-transparent hover:underline -ml-2 rounded-full cursor-pointer">
                         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
                     </Button>
                     {isReadOnly && (
@@ -110,10 +110,10 @@ export default function ApplyPage() {
                     <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight mb-4">
                         {isReadOnly ? 'Your Application' : 'Jianshan Scholarship Application'}
                     </h1>
-                    <p className="text-slate-600 md:text-lg max-w-2xl leading-relaxed">
+                    <p className="text-slate-600 md:text-lg leading-relaxed">
                         {isReadOnly
                             ? 'You have already submitted your application. It is currently locked for review.'
-                            : 'Join the Jianshan Summer Trip and engaging teaching programme. Please fill out the details below carefully.'
+                            : "Your Jianshan journey starts here. Please complete the form below so we can understand your passions, experiences, and why you're drawn to this programme."
                         }
                     </p>
                 </div>

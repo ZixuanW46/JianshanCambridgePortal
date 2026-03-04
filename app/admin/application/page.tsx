@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DecisionCard } from "@/components/admin/decision-card";
 import { NotesSection } from "@/components/admin/notes-section";
 import Link from "next/link";
+import { AvailabilityCalendar } from "@/components/apply/availability-calendar";
 
 function AdminApplicationDetailContent() {
     const { user, loading: authLoading, isAdmin } = useAuth();
@@ -65,29 +66,43 @@ function AdminApplicationDetailContent() {
     }
 
     const personalInfo = {
-        firstName: application.section1_personal?.full_name?.split(' ')[0] || application.personalInfo?.firstName || '',
-        lastName: application.section1_personal?.full_name?.split(' ').slice(1).join(' ') || application.personalInfo?.lastName || '',
-        email: application.section1_personal?.personal_email || application.personalInfo?.email || '',
-        phone: application.section1_personal?.phone_number || application.personalInfo?.phone || '',
-        dateOfBirth: application.section1_personal?.date_of_birth || application.personalInfo?.dateOfBirth || '',
-        gender: application.personalInfo?.gender || '',
-        nationality: application.section1_personal?.nationality || application.personalInfo?.nationality || '',
-        university: application.personalInfo?.university || 'University of Cambridge',
-        college: application.section1_personal?.college || application.personalInfo?.college || '',
-        department: application.personalInfo?.department || '',
-        programme: application.section1_personal?.degree_level || application.personalInfo?.programme || '',
-        yearOfStudy: application.section1_personal?.year_of_study || application.personalInfo?.yearOfStudy || '',
-        subjects: application.section1_personal?.subject ? [application.section1_personal.subject] : application.personalInfo?.subjects || [],
+        firstName: application.section1_personal?.full_name?.split(' ')[0] || '',
+        lastName: application.section1_personal?.full_name?.split(' ').slice(1).join(' ') || '',
+        email: application.section1_personal?.personal_email || '',
+        phone: application.section1_personal?.phone_number || '',
+        dateOfBirth: application.section1_personal?.date_of_birth || '',
+        gender: (application.section1_personal?.gender === 'Other' && application.section1_personal?.gender_other)
+            ? application.section1_personal.gender_other
+            : (application.section1_personal?.gender || ''),
+        nationality: application.section1_personal?.nationality || '',
+        college: application.section1_personal?.college || '',
+        yearOfStudy: application.section1_personal?.year_of_study || '',
+        subjects: application.section1_personal?.subject ? [application.section1_personal.subject] : [],
     };
     const essays = {
-        motivation: application.section2_about_you?.tell_us_about_yourself || application.essays?.motivation || '',
-        experience: application.section3_teaching?.experience_and_strengths || application.essays?.experience || '',
-        additionalInfo: application.section5_availability?.additional_notes || application.essays?.additionalInfo || '',
+        aboutYou: application.section2_about_you?.tell_us_about_yourself || '',
+        subjectPassion: application.section3_teaching?.subject_passion || '',
+        academyMotivation: application.section3_teaching?.academy_motivation || '',
     };
-    const fullName = application.section1_personal?.full_name || [personalInfo.firstName, personalInfo.lastName].filter(Boolean).join(' ') || "No Name";
+
+    const travel = {
+        excitement: application.section4_travel?.excitement_about_china || '',
+        dynamics: application.section4_travel?.group_dynamics || '',
+    };
+
+    const availability = {
+        dates: application.section5_availability?.available_dates || [],
+        dietary: application.section5_availability?.dietary_restrictions || [],
+        dietaryOther: application.section5_availability?.dietary_other || '',
+        additionalNotes: application.section5_availability?.additional_notes || '',
+    };
+
+    const round2 = application.section6_round_2;
+
+    const fullName = application.section1_personal?.full_name || "No Name";
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-slate-50" >
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8 flex items-center gap-4">
@@ -120,10 +135,7 @@ function AdminApplicationDetailContent() {
                                     <InfoRow label="Date of Birth" value={personalInfo.dateOfBirth} />
                                     <InfoRow label="Gender" value={personalInfo.gender} />
                                     <InfoRow label="Nationality" value={personalInfo.nationality} />
-                                    <InfoRow label="University" value={personalInfo.university} />
                                     <InfoRow label="College" value={personalInfo.college} />
-                                    <InfoRow label="Department" value={personalInfo.department} />
-                                    <InfoRow label="Programme" value={personalInfo.programme} />
                                     <InfoRow label="Year of Study" value={personalInfo.yearOfStudy} />
                                     <InfoRow label="Subjects" value={personalInfo.subjects?.join(', ')} />
                                 </div>
@@ -135,22 +147,83 @@ function AdminApplicationDetailContent() {
                             <Card>
                                 <CardHeader><CardTitle>Essays</CardTitle></CardHeader>
                                 <CardContent className="space-y-6">
-                                    {essays.motivation && (
+                                    {essays.aboutYou && (
                                         <div>
-                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Motivation</h4>
-                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{essays.motivation}</p>
+                                            <h4 className="text-sm font-medium text-slate-700 mb-2">About You</h4>
+                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{essays.aboutYou}</p>
                                         </div>
                                     )}
-                                    {essays.experience && (
+                                    {essays.subjectPassion && (
                                         <div>
-                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Teaching Experience</h4>
-                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{essays.experience}</p>
+                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Subject Passion</h4>
+                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{essays.subjectPassion}</p>
                                         </div>
                                     )}
-                                    {essays.additionalInfo && (
+                                    {essays.academyMotivation && (
                                         <div>
-                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Additional Information</h4>
-                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{essays.additionalInfo}</p>
+                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Academy Motivation</h4>
+                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{essays.academyMotivation}</p>
+                                        </div>
+                                    )}
+                                    {travel.excitement && (
+                                        <div>
+                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Excitement about China</h4>
+                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{travel.excitement}</p>
+                                        </div>
+                                    )}
+                                    {travel.dynamics && (
+                                        <div>
+                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Group Dynamics</h4>
+                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{travel.dynamics}</p>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        <Card>
+                            <CardHeader><CardTitle>Logistics &amp; Availability</CardTitle></CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-4">
+                                    <div>
+                                        <h4 className="text-sm font-medium text-slate-700 mb-2">Available Dates</h4>
+                                        <div className="bg-slate-50 border border-slate-100 rounded-lg p-2 max-w-fit">
+                                            <AvailabilityCalendar
+                                                selectedDates={availability.dates}
+                                                onChange={() => { }}
+                                                readonly={true}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-4 pt-2 border-t border-slate-100">
+                                        <InfoRow label="Dietary Restrictions" value={availability.dietary.join(', ') + (availability.dietaryOther ? ` (${availability.dietaryOther})` : '')} />
+                                    </div>
+                                </div>
+                                {availability.additionalNotes && (
+                                    <div>
+                                        <h4 className="text-sm font-medium text-slate-700 mb-2">Additional Notes</h4>
+                                        <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{availability.additionalNotes}</p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {round2 && Object.keys(round2).length > 0 && (
+                            <Card className="border-accent/30 shadow-sm">
+                                <CardHeader className="bg-accent/5"><CardTitle className="text-accent">Round 2 Submission</CardTitle></CardHeader>
+                                <CardContent className="space-y-6 pt-6">
+                                    {round2.session_design_thoughts && (
+                                        <div>
+                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Session Design Thoughts</h4>
+                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{round2.session_design_thoughts}</p>
+                                        </div>
+                                    )}
+                                    {round2.video_url && (
+                                        <div>
+                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Video Presentation Link</h4>
+                                            <a href={round2.video_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline break-all">
+                                                {round2.video_url}
+                                            </a>
                                         </div>
                                     )}
                                 </CardContent>
@@ -188,7 +261,7 @@ function AdminApplicationDetailContent() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 

@@ -75,7 +75,7 @@ export default function AcceptancePage() {
         if (!offerLetterRef.current || !app) return;
         setDownloading(true);
         try {
-            const fullName = app.section1_personal?.full_name || [app.personalInfo?.firstName, app.personalInfo?.lastName].filter(Boolean).join(' ') || "Applicant";
+            const fullName = app.section1_personal?.full_name || "Applicant";
             await generateOfferPdf(offerLetterRef.current, fullName);
         } catch (err) {
             console.error("PDF generation failed:", err);
@@ -95,7 +95,7 @@ export default function AcceptancePage() {
         );
     }
 
-    const fullName = app ? [app.personalInfo?.firstName, app.personalInfo?.lastName].filter(Boolean).join(' ') : "";
+    const fullName = app?.section1_personal?.full_name || "";
 
     return (
         <div className="relative flex min-h-screen w-full flex-col bg-background font-sans overflow-x-hidden text-primary selection:bg-accent/30">

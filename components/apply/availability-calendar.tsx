@@ -232,33 +232,35 @@ export function AvailabilityCalendar({ selectedDates, onChange, readonly = false
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-col gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                <div className="text-sm font-semibold text-slate-700 mb-1">Quick Select Options</div>
-                <label className="flex items-center gap-3 cursor-pointer">
-                    <Checkbox
-                        checked={isJulySelected}
-                        onCheckedChange={() => toggleMonth(julyDates, isJulySelected)}
-                        disabled={readonly}
-                    />
-                    <span className="text-sm text-slate-700">I&apos;m available for the entire month of <strong>July</strong></span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                    <Checkbox
-                        checked={isAugustSelected}
-                        onCheckedChange={() => toggleMonth(augustDates, isAugustSelected)}
-                        disabled={readonly}
-                    />
-                    <span className="text-sm text-slate-700">I&apos;m available for the entire month of <strong>August</strong></span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                    <Checkbox
-                        checked={isAllSelected}
-                        onCheckedChange={() => toggleAll(isAllSelected)}
-                        disabled={readonly}
-                    />
-                    <span className="text-sm text-slate-700">I&apos;m available for <strong>both July and August</strong></span>
-                </label>
-            </div>
+            {!readonly && (
+                <div className="flex flex-col gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                    <div className="text-sm font-semibold text-slate-700 mb-1">Quick Select Options</div>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <Checkbox
+                            checked={isJulySelected}
+                            onCheckedChange={() => toggleMonth(julyDates, isJulySelected)}
+                            disabled={readonly}
+                        />
+                        <span className="text-sm text-slate-700">I&apos;m available for the entire month of <strong>July</strong></span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <Checkbox
+                            checked={isAugustSelected}
+                            onCheckedChange={() => toggleMonth(augustDates, isAugustSelected)}
+                            disabled={readonly}
+                        />
+                        <span className="text-sm text-slate-700">I&apos;m available for the entire month of <strong>August</strong></span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <Checkbox
+                            checked={isAllSelected}
+                            onCheckedChange={() => toggleAll(isAllSelected)}
+                            disabled={readonly}
+                        />
+                        <span className="text-sm text-slate-700">I&apos;m available for <strong>both July and August</strong></span>
+                    </label>
+                </div>
+            )}
 
             <div
                 ref={calendarWrapperRef}

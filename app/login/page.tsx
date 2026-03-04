@@ -141,14 +141,14 @@ export default function LoginPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
                     <div className="absolute top-8 left-8 z-10">
-                        <div className="inline-flex items-center justify-center px-[16px] py-[8px] rounded-[32px] bg-[#818181]/40 backdrop-blur-[4px] border border-[#CCC]/40 w-fit">
-                            <span className="text-white text-xs font-medium tracking-wide">JOIN THE 2026 COHORT</span>
+                        <div className="inline-flex items-center justify-center px-[12px] py-[4px] rounded-[32px] bg-[#818181]/40 backdrop-blur-[4px] border border-[#CCC]/40 w-fit">
+                            <span className="text-white text-[10px] font-medium tracking-wider">JOIN THE 2026 COHORT</span>
                         </div>
                     </div>
 
                     {/* Marketing Text */}
                     <div className="absolute bottom-14 left-8 space-y-4 z-10">
-                        <h1 className="text-white text-xl font-serif leading-tight drop-shadow-sm">
+                        <h1 className="text-white text-3xl font-serif font-bold leading-tight drop-shadow-sm">
                             Go to inspire.
                             <br />
                             <span className="text-[#FFB800] italic">Return Inspired.</span>
@@ -206,9 +206,9 @@ export default function LoginPage() {
 
                     <div className="flex flex-col justify-end items-start space-y-6">
                         <div className="inline-flex items-center justify-center px-4 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/10">
-                            <span className="text-white font-medium text-lg tracking-wide uppercase">JOIN THE 2026 COHORT</span>
+                            <span className="text-white font-medium text-xs tracking-wider uppercase">JOIN THE 2026 COHORT</span>
                         </div>
-                        <h1 className="text-white text-5xl xl:text-6xl font-serif leading-tight tracking-tight drop-shadow-md">
+                        <h1 className="text-white text-6xl xl:text-7xl font-serif font-bold leading-tight tracking-tight drop-shadow-md">
                             Go to inspire.<br />
                             <span className="text-accent italic">Return Inspired.</span>
                         </h1>
