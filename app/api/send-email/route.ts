@@ -22,6 +22,10 @@ export async function POST(req: NextRequest) {
             const templatePath = path.join(process.cwd(), 'lib/email-templates/decision.html');
             const template = fs.readFileSync(templatePath, 'utf8');
             html = template.replace('{{name}}', name || 'Applicant');
+        } else if (type === 'round2') {
+            const templatePath = path.join(process.cwd(), 'lib/email-templates/round2.html');
+            const template = fs.readFileSync(templatePath, 'utf8');
+            html = template.replace('{{name}}', name || 'Applicant');
         }
 
         const { data, error } = await resend.emails.send({
