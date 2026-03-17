@@ -39,10 +39,13 @@ export interface Application {
         group_dynamics: string;
     };
     section5_availability?: {
-        available_dates: string[];
+        available_dates?: string[];
         dietary_restrictions: string[];
         dietary_other?: string | null;
         additional_notes?: string | null;
+        confirms_program_dates?: boolean;
+        confirms_flight_costs?: boolean;
+        confirms_visa_responsibility?: boolean;
     };
     section6_round_2?: {
         session_design_thoughts: string;

@@ -13,7 +13,6 @@ import { Loader2, Save, Send, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, 
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Section } from "./section";
-import { AvailabilityCalendar } from "./availability-calendar";
 import { FileUpload } from "@/components/ui/file-upload";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -21,6 +20,39 @@ import { format } from "date-fns";
 import { enGB } from "date-fns/locale";
 
 type FormSection = 1 | 2 | 3 | 4 | 5;
+
+const LOGISTICS_CONFIRMATIONS = [
+    {
+        key: "confirms_program_dates",
+        title: "Programme Dates & Availability",
+        description: "If selected, I understand that Jianshan Academy 2026 will take place in Hangzhou from August 2 to August 8, followed by the China Trip from August 8 to August 18, travelling from Hangzhou to Beijing.",
+        details: [
+            "Scholars must arrive in Hangzhou on August 1, ideally before 17:00 China Time.",
+            "Return travel can be booked from Beijing on August 18 at any time.",
+            "I confirm that I am available for this full time window."
+        ],
+        checkboxLabel: "I understand the programme dates and confirm I am available for the full schedule."
+    },
+    {
+        key: "confirms_flight_costs",
+        title: "International Flights",
+        description: "International return flights to and from China are not covered by the programme.",
+        details: [
+            "I will need to book and pay for my own international flights.",
+            "I have checked the likely flight options and prices before applying."
+        ],
+        checkboxLabel: "I understand that I must arrange and cover my own international return flights."
+    },
+    {
+        key: "confirms_visa_responsibility",
+        title: "Visa Responsibility",
+        description: "It is my responsibility to confirm whether I can enter China visa-free or whether I need to apply for a visa independently.",
+        details: [
+            "If a visa is required, I understand that I must complete the application myself and cover any related costs."
+        ],
+        checkboxLabel: "I understand that checking visa eligibility and securing the correct entry permission is my responsibility."
+    }
+] as const;
 
 interface ApplicationFormProps {
     app: Application;
@@ -73,10 +105,13 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
             dietary_restrictions: app.section5_availability?.dietary_restrictions || [],
             dietary_other: app.section5_availability?.dietary_other || "",
             additional_notes: app.section5_availability?.additional_notes || "",
+            confirms_program_dates: app.section5_availability?.confirms_program_dates || false,
+            confirms_flight_costs: app.section5_availability?.confirms_flight_costs || false,
+            confirms_visa_responsibility: app.section5_availability?.confirms_visa_responsibility || false,
         }
     });
 
-    const updateField = (section: keyof typeof formData, field: string, value: string | string[]) => {
+    const updateField = (section: keyof typeof formData, field: string, value: string | string[] | boolean) => {
         if (isReadOnly) return;
         setFormData(prev => ({
             ...prev,
@@ -100,6 +135,10 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
     };
 
     const countWords = (str: string) => str.trim().split(/\s+/).filter(Boolean).length;
+    const isValidCambridgeEmail = (email: string) => {
+        const normalizedEmail = email.trim().toLowerCase();
+        return normalizedEmail.endsWith("@cam.ac.uk") || normalizedEmail.endsWith("@cantab.ac.uk");
+    };
 
     const validateForm = () => {
         const errors: string[] = [];
@@ -112,28 +151,31 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
         if (!section1_personal.date_of_birth) errors.push("Date of Birth");
         if (!section1_personal.phone_number) errors.push("Phone Number");
         if (!section1_personal.personal_email) errors.push("Personal Email");
-        if (!section1_personal.cambridge_email || !section1_personal.cambridge_email.endsWith('@cam.ac.uk')) errors.push("Cambridge Email");
+        if (!section1_personal.cambridge_email || !isValidCambridgeEmail(section1_personal.cambridge_email)) errors.push("Cambridge Email");
         if (!section1_personal.college) errors.push("College");
         if (!section1_personal.subject || (section1_personal.subject === "Other" && !section1_personal.subject_other)) errors.push("Subject");
         if (!section1_personal.year_of_study || (section1_personal.year_of_study === "Other" && !section1_personal.year_of_study_other)) errors.push("Year of Study");
 
         // Section 2
         if (!section2_about_you.tell_us_about_yourself) errors.push("About Yourself");
-        if (countWords(section2_about_you.tell_us_about_yourself) > 300) errors.push("About Yourself (Word Limit)");
+        if (countWords(section2_about_you.tell_us_about_yourself) > 500) errors.push("About Yourself (Word Limit)");
 
         // Section 3
         if (!section3_teaching.subject_passion) errors.push("Subject Passion");
-        if (countWords(section3_teaching.subject_passion) > 300) errors.push("Subject Passion (Word Limit)");
+        if (countWords(section3_teaching.subject_passion) > 500) errors.push("Subject Passion (Word Limit)");
         if (!section3_teaching.academy_motivation) errors.push("Academy Motivation");
-        if (countWords(section3_teaching.academy_motivation) > 300) errors.push("Academy Motivation (Word Limit)");
+        if (countWords(section3_teaching.academy_motivation) > 500) errors.push("Academy Motivation (Word Limit)");
 
         // Section 4
         if (!section4_travel.excitement_about_china) errors.push("Excitement about China");
-        if (countWords(section4_travel.excitement_about_china) > 300) errors.push("Excitement about China (Word Limit)");
+        if (countWords(section4_travel.excitement_about_china) > 500) errors.push("Excitement about China (Word Limit)");
         if (!section4_travel.group_dynamics) errors.push("Group Dynamics");
-        if (countWords(section4_travel.group_dynamics) > 300) errors.push("Group Dynamics (Word Limit)");
+        if (countWords(section4_travel.group_dynamics) > 500) errors.push("Group Dynamics (Word Limit)");
 
         // Section 5
+        if (!section5_availability.confirms_program_dates) errors.push("Programme Dates Confirmation");
+        if (!section5_availability.confirms_flight_costs) errors.push("Flight Costs Confirmation");
+        if (!section5_availability.confirms_visa_responsibility) errors.push("Visa Responsibility Confirmation");
         if (section5_availability.dietary_restrictions.length === 0) errors.push("Dietary Restrictions");
         if (section5_availability.dietary_restrictions.includes("Other") && !section5_availability.dietary_other) errors.push("Dietary Other");
 
@@ -194,7 +236,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
     const [[page, direction], setPage] = useState([1, 0]);
     const normalizedSubjectQuery = subjectQuery.trim().toLowerCase();
 
-    const filteredSubjectGroups = useMemo(() => {
+    const filteredSubjectGroups = useMemo<Record<string, string[]>>(() => {
         if (!normalizedSubjectQuery) return SUBJECTS_GROUPED;
         return Object.fromEntries(
             Object.entries(SUBJECTS_GROUPED)
@@ -207,6 +249,9 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
     }, [normalizedSubjectQuery]);
 
     const hasSubjectMatches = Object.keys(filteredSubjectGroups).length > 0;
+    const hasOtherSubjectOption = Object.values(filteredSubjectGroups).some(subjects => subjects.includes("Other"));
+    const shouldShowFallbackOtherOption = normalizedSubjectQuery.length > 0 && !hasOtherSubjectOption;
+    const hasVisibleSubjectOptions = hasSubjectMatches || shouldShowFallbackOtherOption;
 
     const paginate = (newDirection: number, section: FormSection) => {
         setPage([section, newDirection]);
@@ -345,7 +390,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                                     </div>
                                     <div className="space-y-2">
                                         {renderFieldLabel("Cambridge Email")}
-                                        <Input type="email" placeholder="abc123@cam.ac.uk" value={formData.section1_personal.cambridge_email} onChange={e => updateField('section1_personal', 'cambridge_email', e.target.value)} disabled={isReadOnly} />
+                                        <Input type="email" placeholder="abc123@cam.ac.uk or user@cantab.ac.uk" value={formData.section1_personal.cambridge_email} onChange={e => updateField('section1_personal', 'cambridge_email', e.target.value)} disabled={isReadOnly} />
                                     </div>
 
                                     <div className="space-y-2">
@@ -391,8 +436,9 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                                                     />
                                                 </div>
                                                 <div className="max-h-72 overflow-y-auto p-1">
-                                                    {hasSubjectMatches ? (
-                                                        (Object.entries(filteredSubjectGroups) as [string, string[]][]).map(([groupName, subjects]) => (
+                                                    {hasVisibleSubjectOptions ? (
+                                                        <>
+                                                            {(Object.entries(filteredSubjectGroups) as [string, string[]][]).map(([groupName, subjects]) => (
                                                             <div key={groupName} className="py-1">
                                                                 <div className="px-2 py-1 text-xs font-semibold text-slate-500">{groupName}</div>
                                                                 {subjects.map(subject => (
@@ -416,7 +462,27 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                                                                     </button>
                                                                 ))}
                                                             </div>
-                                                        ))
+                                                            ))}
+                                                            {shouldShowFallbackOtherOption && (
+                                                                <div className="py-1 border-t border-slate-100 mt-1 pt-2">
+                                                                    <div className="px-2 py-1 text-xs font-semibold text-slate-500">Other</div>
+                                                                    <button
+                                                                        type="button"
+                                                                        className={cn(
+                                                                            "w-full px-2 py-1.5 rounded-sm text-sm flex items-center justify-between hover:bg-slate-100 text-left",
+                                                                            formData.section1_personal.subject === "Other" && "bg-[#E8F3E8] text-[#0F2E18] font-medium"
+                                                                        )}
+                                                                        onClick={() => {
+                                                                            updateField('section1_personal', 'subject', "Other");
+                                                                            setSubjectPickerOpen(false);
+                                                                        }}
+                                                                    >
+                                                                        <span className="truncate">Other</span>
+                                                                        {formData.section1_personal.subject === "Other" && <Check className="h-4 w-4 shrink-0" />}
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </>
                                                     ) : (
                                                         <div className="px-2 py-6 text-sm text-center text-slate-500">
                                                             No matching subjects found.
@@ -467,7 +533,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                                         </div>
                                         <div className="flex justify-end">
                                             <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1">
-                                                {renderWordCount(countWords(formData.section2_about_you.tell_us_about_yourself), 300)}
+                                                {renderWordCount(countWords(formData.section2_about_you.tell_us_about_yourself), 500)}
                                             </div>
                                         </div>
                                         <Textarea
@@ -512,7 +578,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                                         {renderFieldLabel("We'd love to learn about your passion for your chosen subject. What is the story behind your choice? What initially sparked your interest, and how has your understanding of the discipline evolved since you began your university studies?")}
                                         <div className="flex justify-end">
                                             <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1">
-                                                {renderWordCount(countWords(formData.section3_teaching.subject_passion), 300)}
+                                                {renderWordCount(countWords(formData.section3_teaching.subject_passion), 500)}
                                             </div>
                                         </div>
                                         <Textarea
@@ -527,7 +593,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                                         <p className="text-sm text-slate-500 italic">Whether it is the opportunity for cultural exchange, a passion for teaching and mentorship, or another personal drive, we&apos;d love to hear what makes this experience meaningful to you.</p>
                                         <div className="flex justify-end">
                                             <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1">
-                                                {renderWordCount(countWords(formData.section3_teaching.academy_motivation), 300)}
+                                                {renderWordCount(countWords(formData.section3_teaching.academy_motivation), 500)}
                                             </div>
                                         </div>
                                         <Textarea
@@ -549,7 +615,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                                         {renderFieldLabel("What excites you most about visiting China?")}
                                         <div className="flex justify-end">
                                             <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1">
-                                                {renderWordCount(countWords(formData.section4_travel.excitement_about_china), 300)}
+                                                {renderWordCount(countWords(formData.section4_travel.excitement_about_china), 500)}
                                             </div>
                                         </div>
                                         <Textarea
@@ -564,7 +630,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                                         <p className="text-sm text-slate-500 italic">For example, you could tell us about your role in group settings, your travel style, or how you connect with others on the road.</p>
                                         <div className="flex justify-end">
                                             <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1">
-                                                {renderWordCount(countWords(formData.section4_travel.group_dynamics), 300)}
+                                                {renderWordCount(countWords(formData.section4_travel.group_dynamics), 500)}
                                             </div>
                                         </div>
                                         <Textarea
@@ -582,17 +648,38 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                         {currentSection === 5 && (
                             <Section number="05" title="Logistics & Details" titleEn="Making it happen">
                                 <div className="space-y-8">
-                                    <div className="space-y-3">
-                                        {renderFieldLabel("Please select all dates you are available in July and August 2026.", false)}
-                                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-600 space-y-2">
-                                            <p className="italic text-slate-500 font-medium">We will be running multiple programs between July and August 2026; each program typically involves 7 days in the Academy followed by an 11-day trip.</p>
-                                            <p className="italic text-slate-500 font-medium">Please select all dates you are available. We will allocate participants to specific programs based on your indicated availability. You can click individual dates, drag to select a range, or use the quick-select options below.</p>
-                                        </div>
-                                        <AvailabilityCalendar
-                                            selectedDates={formData.section5_availability.available_dates}
-                                            onChange={(dates) => updateField('section5_availability', 'available_dates', dates)}
-                                            readonly={isReadOnly}
-                                        />
+                                    <div className="space-y-8">
+                                        {LOGISTICS_CONFIRMATIONS.map((item) => (
+                                            <div key={item.key} className="space-y-3">
+                                                {renderFieldLabel(item.title, true)}
+                                                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-600 space-y-2">
+                                                    <p>{item.description}</p>
+                                                    {item.details.length > 0 && (
+                                                        <ul className="list-disc pl-5 space-y-1">
+                                                            {item.details.map((detail) => (
+                                                                <li key={detail}>
+                                                                    {detail}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </div>
+                                                <label className={cn(
+                                                    "flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-all text-sm mt-3",
+                                                    formData.section5_availability[item.key] ? "border-[#1A4D2E] bg-[#E8F3E8] text-[#0F2E18] font-medium shadow-sm" : "border-slate-200 hover:border-slate-300 bg-white",
+                                                    isInvalid(item.checkboxLabel) && submitAttempted ? "border-red-500 bg-red-50 text-red-700" : "",
+                                                    isReadOnly && "cursor-default"
+                                                )}>
+                                                    <Checkbox
+                                                        className="mt-0.5"
+                                                        checked={formData.section5_availability[item.key]}
+                                                        onCheckedChange={(checked) => updateField("section5_availability", item.key, checked === true)}
+                                                        disabled={isReadOnly}
+                                                    />
+                                                    <span className="leading-snug">{item.checkboxLabel}</span>
+                                                </label>
+                                            </div>
+                                        ))}
                                     </div>
                                     <div className="space-y-3 border-t pt-6">
                                         {renderFieldLabel("Do you have any dietary restrictions or allergies?")}

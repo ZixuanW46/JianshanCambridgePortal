@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DecisionCard } from "@/components/admin/decision-card";
 import { NotesSection } from "@/components/admin/notes-section";
 import Link from "next/link";
-import { AvailabilityCalendar } from "@/components/apply/availability-calendar";
 
 function AdminApplicationDetailContent() {
     const { user, loading: authLoading, isAdmin } = useAuth();
@@ -91,10 +90,12 @@ function AdminApplicationDetailContent() {
     };
 
     const availability = {
-        dates: application.section5_availability?.available_dates || [],
         dietary: application.section5_availability?.dietary_restrictions || [],
         dietaryOther: application.section5_availability?.dietary_other || '',
         additionalNotes: application.section5_availability?.additional_notes || '',
+        confirmsProgramDates: application.section5_availability?.confirms_program_dates || false,
+        confirmsFlightCosts: application.section5_availability?.confirms_flight_costs || false,
+        confirmsVisaResponsibility: application.section5_availability?.confirms_visa_responsibility || false,
     };
 
     const round2 = application.section6_round_2;
@@ -182,17 +183,27 @@ function AdminApplicationDetailContent() {
                         )}
 
                         <Card>
-                            <CardHeader><CardTitle>Logistics &amp; Availability</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Logistics &amp; Confirmations</CardTitle></CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="space-y-4">
-                                    <div>
-                                        <h4 className="text-sm font-medium text-slate-700 mb-2">Available Dates</h4>
-                                        <div className="bg-slate-50 border border-slate-100 rounded-lg p-2 max-w-fit">
-                                            <AvailabilityCalendar
-                                                selectedDates={availability.dates}
-                                                onChange={() => { }}
-                                                readonly={true}
-                                            />
+                                    <div className="grid grid-cols-1 gap-3">
+                                        <div className="bg-slate-50 border border-slate-100 rounded-lg p-4">
+                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Programme Dates &amp; Availability</h4>
+                                            <p className="text-sm text-slate-600">Academy: August 2 to August 8 in Hangzhou. China Trip: August 8 to August 18, starting in Hangzhou and ending in Beijing.</p>
+                                            <p className="text-sm text-slate-600 mt-2">Required arrival: August 1 in Hangzhou, ideally before 17:00 China Time. Return departure: August 18 from Beijing.</p>
+                                            <p className="text-sm mt-3 font-medium text-slate-800">Confirmed: {availability.confirmsProgramDates ? "Yes" : "No"}</p>
+                                        </div>
+                                        <div className="bg-slate-50 border border-slate-100 rounded-lg p-4">
+                                            <h4 className="text-sm font-medium text-slate-700 mb-2">International Flights</h4>
+                                            <p className="text-sm text-slate-600">International return flights are not covered. Applicants must arrange and pay for their own travel to China and back home.</p>
+                                            <p className="text-sm text-slate-600 mt-2">Applicants are also asked to check likely flight options and prices before applying.</p>
+                                            <p className="text-sm mt-3 font-medium text-slate-800">Confirmed: {availability.confirmsFlightCosts ? "Yes" : "No"}</p>
+                                        </div>
+                                        <div className="bg-slate-50 border border-slate-100 rounded-lg p-4">
+                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Visa Responsibility</h4>
+                                            <p className="text-sm text-slate-600">Applicants must confirm for themselves whether they can enter China visa-free or whether they need to apply for a visa.</p>
+                                            <p className="text-sm text-slate-600 mt-2">If a visa is needed, the applicant must complete the application independently and cover any related costs.</p>
+                                            <p className="text-sm mt-3 font-medium text-slate-800">Confirmed: {availability.confirmsVisaResponsibility ? "Yes" : "No"}</p>
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-1 gap-4 pt-2 border-t border-slate-100">
