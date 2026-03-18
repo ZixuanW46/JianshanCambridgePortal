@@ -98,6 +98,52 @@ function AdminApplicationDetailContent() {
     };
 
     const round2 = application.section6_round_2;
+    const hasRound2ConfirmationData = !!round2 && [
+        round2.confirms_theme_preparation,
+        round2.confirms_ab_session_delivery,
+        round2.confirms_student_facing_role,
+        round2.confirms_workload_readiness,
+        round2.confirms_deposit_terms,
+        round2.confirms_flight_costs,
+        round2.confirms_visa_responsibility,
+    ].some(value => value !== undefined);
+    const round2Confirmations = hasRound2ConfirmationData ? [
+        {
+            label: "Theme Preparation",
+            description: "Understands they will prepare teaching around the Jianshan model and the Future City theme.",
+            confirmed: !!round2.confirms_theme_preparation,
+        },
+        {
+            label: "A/B Session Delivery",
+            description: "Understands they must prepare one Type A and one Type B session and deliver them to different student groups.",
+            confirmed: !!round2.confirms_ab_session_delivery,
+        },
+        {
+            label: "Student-Facing Role",
+            description: "Understands the role includes engagement, clarity, accessibility, and participation, not only content delivery.",
+            confirmed: !!round2.confirms_student_facing_role,
+        },
+        {
+            label: "Teaching Workload",
+            description: "Confirms readiness for around 3-4 hours of teaching per day during camp.",
+            confirmed: !!round2.confirms_workload_readiness,
+        },
+        {
+            label: "Deposit Terms",
+            description: "Understands the GBP 350 place-holding deposit, withdrawal terms, and post-camp return.",
+            confirmed: !!round2.confirms_deposit_terms,
+        },
+        {
+            label: "Flight Costs",
+            description: "Understands international return flights are self-arranged and self-funded.",
+            confirmed: !!round2.confirms_flight_costs,
+        },
+        {
+            label: "Visa Responsibility",
+            description: "Understands they must arrange their own visa and cover the cost if visa-free entry is unavailable.",
+            confirmed: !!round2.confirms_visa_responsibility,
+        },
+    ] : [];
 
     const fullName = application.section1_personal?.full_name || "No Name";
     const initials = fullName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || '?';
@@ -187,16 +233,48 @@ function AdminApplicationDetailContent() {
                             <section>
                                 <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-6 border-b border-slate-200 pb-2 text-accent">Final Round Submission</h3>
                                 <div className="space-y-8 bg-accent/5 p-6 rounded-xl border border-accent/20">
-                                    {round2.session_design_thoughts && (
-                                        <EssayBlock title="Session Design Thoughts" content={round2.session_design_thoughts} />
+                                    {(round2.type_a_session_thoughts || round2.session_design_thoughts) && (
+                                        <div className="space-y-3">
+                                            {round2.type_a_session_title && (
+                                                <InfoRow label="Type A Session Title" value={round2.type_a_session_title} />
+                                            )}
+                                            <EssayBlock title="Type A Session Idea" content={round2.type_a_session_thoughts || round2.session_design_thoughts || ""} />
+                                        </div>
+                                    )}
+                                    {round2.type_b_session_thoughts && (
+                                        <div className="space-y-3">
+                                            {round2.type_b_session_title && (
+                                                <InfoRow label="Type B Session Title" value={round2.type_b_session_title} />
+                                            )}
+                                            <EssayBlock title="Type B Session Idea" content={round2.type_b_session_thoughts} />
+                                        </div>
                                     )}
                                     {round2.video_url && (
                                         <div>
-                                            <h4 className="text-sm font-medium text-slate-900 mb-2">Video Presentation</h4>
+                                            <h4 className="text-sm font-medium text-slate-900 mb-2">Video Introduction</h4>
                                             <a href={round2.video_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:text-accent/80 font-medium hover:underline flex items-center gap-1 break-all">
                                                 {round2.video_url}
                                             </a>
                                         </div>
+                                    )}
+                                    {round2Confirmations.length > 0 && (
+                                        <div className="space-y-4">
+                                            <h4 className="text-sm font-medium text-slate-900">Final Round Confirmations</h4>
+                                            <div className="rounded-xl border border-accent/20 bg-white/70 overflow-hidden">
+                                                {round2Confirmations.map((item, index) => (
+                                                    <div key={item.label} className={index === round2Confirmations.length - 1 ? "p-4 flex justify-between items-start gap-4" : "p-4 border-b border-slate-200 flex justify-between items-start gap-4"}>
+                                                        <div>
+                                                            <div className="font-medium text-slate-900">{item.label}</div>
+                                                            <div className="text-slate-500 mt-1">{item.description}</div>
+                                                        </div>
+                                                        <ConfirmationBadge confirmed={item.confirmed} />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {round2.final_round_concerns && (
+                                        <EssayBlock title="Participation / Delivery Concerns" content={round2.final_round_concerns} />
                                     )}
                                 </div>
                             </section>

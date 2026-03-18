@@ -127,7 +127,7 @@ export const dbService = {
     },
 
     // Submit round 2 application
-    async submitRound2Application(userId: string, round2Data: { session_design_thoughts: string, video_url: string }) {
+    async submitRound2Application(userId: string, round2Data: NonNullable<Application['section6_round_2']>) {
         const timestamp = new Date().toISOString();
         const docRef = doc(db, COLLECTION, userId);
 

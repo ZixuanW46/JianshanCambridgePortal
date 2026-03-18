@@ -48,8 +48,20 @@ export interface Application {
         confirms_visa_responsibility?: boolean;
     };
     section6_round_2?: {
-        session_design_thoughts: string;
+        session_design_thoughts?: string;
+        type_a_session_title?: string;
+        type_a_session_thoughts?: string;
+        type_b_session_title?: string;
+        type_b_session_thoughts?: string;
         video_url: string;
+        confirms_theme_preparation?: boolean;
+        confirms_ab_session_delivery?: boolean;
+        confirms_student_facing_role?: boolean;
+        confirms_workload_readiness?: boolean;
+        confirms_deposit_terms?: boolean;
+        confirms_flight_costs?: boolean;
+        confirms_visa_responsibility?: boolean;
+        final_round_concerns?: string | null;
     };
     // Admin-only data
     adminData?: {

@@ -226,11 +226,11 @@ function ProgressTimeline({ app }: { app: Application }) {
                                 isRound2Invited && !isRound2Submitted ? "text-primary dark:text-accent" :
                                     !isRound2Invited ? "text-muted-foreground" : "text-foreground"
                             )}>
-                                Round 2 Submission
+                                Final Round Submission
                             </p>
                             <p className="text-sm text-muted-foreground font-normal leading-normal">
-                                {isRound2Invited && !isRound2Submitted ? "Please submit Session Design & Video" :
-                                    isRound2Submitted ? "Round 2 Submitted" : "Session Design & Video"}
+                                {isRound2Invited && !isRound2Submitted ? "Please submit your teaching challenge" :
+                                    isRound2Submitted ? "Final Round Submitted" : "Teaching Challenge"}
                             </p>
                         </div>
 
@@ -531,21 +531,21 @@ export default function DashboardPage() {
                                 <>
                                     <h2 className="text-2xl md:text-3xl font-bold leading-tight">You&apos;re Shortlisted! ✨</h2>
                                     <p className="text-muted-foreground leading-relaxed">
-                                        Congratulations! You have been shortlisted for the next round. Please submit your session design and a short video introduction.
+                                        Congratulations! You have been shortlisted for the final round. Please review the teaching brief and submit your session ideas, video introduction, and final confirmations.
                                     </p>
                                     <div className="mt-4 pt-4 border-t flex gap-4">
                                         <Button size="lg" asChild>
                                             <Link href="/apply-round2">
-                                                Complete Round 2 <ArrowRight className="ml-2 h-5 w-5" strokeWidth={3} />
+                                                Complete Final Round <ArrowRight className="ml-2 h-5 w-5" strokeWidth={3} />
                                             </Link>
                                         </Button>
                                     </div>
                                 </>
                             ) : ['round_2_submitted', 'round_2_under_review'].includes(app.status) ? (
                                 <>
-                                    <h2 className="text-2xl md:text-3xl font-bold leading-tight">Round 2 Under Review 👀</h2>
+                                    <h2 className="text-2xl md:text-3xl font-bold leading-tight">Final Round Under Review 👀</h2>
                                     <p className="text-muted-foreground leading-relaxed">
-                                        We have received your Session Design & Video. Our team is reviewing it and we will release the final decision soon.
+                                        We have received your final round teaching challenge. Our team is reviewing it and we will release the final decision soon.
                                     </p>
                                 </>
                             ) : (

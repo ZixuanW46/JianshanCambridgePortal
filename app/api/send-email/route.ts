@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
         }
 
         const { data, error } = await resend.emails.send({
-            from: 'Cambridge Tutor Programme <noreply@jianshanacademy.com>',
+            from: 'Jianshan Academy <noreply@jianshanacademy.com>',
             to: [to],
             subject,
             html,
