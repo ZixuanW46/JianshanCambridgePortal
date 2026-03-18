@@ -8,8 +8,14 @@ export async function POST(req: NextRequest) {
         const resend = new Resend(process.env.RESEND_API_KEY);
         const { to, subject, type, name, decision } = await req.json();
 
-        if (!to || !subject) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!to || !emailRegex.test(to)) {
+            return NextResponse.json({ error: 'Invalid or missing email address' }, { status: 400 });
+        }
+
+        if (!subject) {
+            return NextResponse.json({ error: 'Missing subject' }, { status: 400 });
         }
 
         let html = '';

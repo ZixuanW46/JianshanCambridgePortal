@@ -25,7 +25,7 @@ const LOGISTICS_CONFIRMATIONS = [
     {
         key: "confirms_program_dates",
         title: "Programme Dates & Availability",
-        description: "If selected, I understand that Jianshan Academy 2026 will take place in Hangzhou from August 2 to August 8, followed by the China Trip from August 8 to August 18, travelling from Hangzhou to Beijing.",
+        description: "If selected, I understand that Jianshan Academy 2026 will take place in Hangzhou from August 2 to August 8, followed by the China Trip from August 8 to August 18, travelling through Hangzhou, Shanghai, and Beijing.",
         details: [
             "Scholars must arrive in Hangzhou on August 1, ideally before 17:00 China Time.",
             "Return travel can be booked from Beijing on August 18 at any time.",
@@ -135,6 +135,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
     };
 
     const countWords = (str: string) => str.trim().split(/\s+/).filter(Boolean).length;
+    const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
     const isValidCambridgeEmail = (email: string) => {
         const normalizedEmail = email.trim().toLowerCase();
         return normalizedEmail.endsWith("@cam.ac.uk") || normalizedEmail.endsWith("@cantab.ac.uk");
@@ -150,7 +151,7 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
         if (!section1_personal.nationality) errors.push("Nationality");
         if (!section1_personal.date_of_birth) errors.push("Date of Birth");
         if (!section1_personal.phone_number) errors.push("Phone Number");
-        if (!section1_personal.personal_email) errors.push("Personal Email");
+        if (!section1_personal.personal_email || !isValidEmail(section1_personal.personal_email)) errors.push("Personal Email");
         if (!section1_personal.cambridge_email || !isValidCambridgeEmail(section1_personal.cambridge_email)) errors.push("Cambridge Email");
         if (!section1_personal.college) errors.push("College");
         if (!section1_personal.subject || (section1_personal.subject === "Other" && !section1_personal.subject_other)) errors.push("Subject");
@@ -386,11 +387,30 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
 
                                     <div className="space-y-2">
                                         {renderFieldLabel("Personal Email")}
-                                        <Input type="email" value={formData.section1_personal.personal_email} onChange={e => updateField('section1_personal', 'personal_email', e.target.value)} disabled={isReadOnly} />
+                                        <Input 
+                                            type="email" 
+                                            value={formData.section1_personal.personal_email} 
+                                            onChange={e => updateField('section1_personal', 'personal_email', e.target.value)} 
+                                            disabled={isReadOnly}
+                                            className={cn(submitAttempted && formData.section1_personal.personal_email && !isValidEmail(formData.section1_personal.personal_email) && "border-red-500 focus-visible:ring-red-500")}
+                                        />
+                                        {submitAttempted && formData.section1_personal.personal_email && !isValidEmail(formData.section1_personal.personal_email) && (
+                                            <p className="text-xs text-red-500 font-medium animate-in fade-in slide-in-from-top-1 duration-200">Please enter a valid email address.</p>
+                                        )}
                                     </div>
                                     <div className="space-y-2">
                                         {renderFieldLabel("Cambridge Email")}
-                                        <Input type="email" placeholder="abc123@cam.ac.uk or user@cantab.ac.uk" value={formData.section1_personal.cambridge_email} onChange={e => updateField('section1_personal', 'cambridge_email', e.target.value)} disabled={isReadOnly} />
+                                        <Input 
+                                            type="email" 
+                                            placeholder="abc123@cam.ac.uk or user@cantab.ac.uk" 
+                                            value={formData.section1_personal.cambridge_email} 
+                                            onChange={e => updateField('section1_personal', 'cambridge_email', e.target.value)} 
+                                            disabled={isReadOnly}
+                                            className={cn(submitAttempted && formData.section1_personal.cambridge_email && !isValidCambridgeEmail(formData.section1_personal.cambridge_email) && "border-red-500 focus-visible:ring-red-500")}
+                                        />
+                                        {submitAttempted && formData.section1_personal.cambridge_email && !isValidCambridgeEmail(formData.section1_personal.cambridge_email) && (
+                                            <p className="text-xs text-red-500 font-medium animate-in fade-in slide-in-from-top-1 duration-200">Please use a @cam.ac.uk or @cantab.ac.uk address.</p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">

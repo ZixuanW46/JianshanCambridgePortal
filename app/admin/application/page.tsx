@@ -28,16 +28,16 @@ function AdminApplicationDetailContent() {
         }
     }, [user, authLoading, isAdmin, router]);
 
-    const fetchApplication = async () => {
+    const fetchApplication = async (silent = false) => {
         if (!applicationId) return;
-        setLoading(true);
+        if (!silent) setLoading(true);
         try {
             const app = await dbService.getMyApplication(applicationId);
             setApplication(app as Application);
         } catch (error) {
             console.error("Failed to fetch application:", error);
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -65,8 +65,7 @@ function AdminApplicationDetailContent() {
     }
 
     const personalInfo = {
-        firstName: application.section1_personal?.full_name?.split(' ')[0] || '',
-        lastName: application.section1_personal?.full_name?.split(' ').slice(1).join(' ') || '',
+        fullName: application.section1_personal?.full_name || 'No Name',
         email: application.section1_personal?.personal_email || '',
         phone: application.section1_personal?.phone_number || '',
         dateOfBirth: application.section1_personal?.date_of_birth || '',
@@ -101,186 +100,220 @@ function AdminApplicationDetailContent() {
     const round2 = application.section6_round_2;
 
     const fullName = application.section1_personal?.full_name || "No Name";
+    const initials = fullName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || '?';
 
     return (
-        <div className="min-h-screen bg-slate-50" >
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Header */}
-                <div className="mb-8 flex items-center gap-4">
-                    <Link href="/admin/dashboard" className="text-slate-600 hover:text-slate-900 transition-colors">
-                        <ArrowLeft className="w-5 h-5" />
+        <div className="min-h-screen bg-slate-50 pb-20">
+            {/* Header / Profile Banner */}
+            <div className="bg-white border-b border-slate-200 pt-8 pb-12 mb-8">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <Link href="/admin/dashboard" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors mb-6">
+                        <ArrowLeft className="w-4 h-4 mr-1" />
+                        Back to applications
                     </Link>
-                    <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-bold text-slate-900">{fullName}</h1>
+                    
+                    <div className="flex flex-col md:flex-row md:items-end gap-6 justify-between">
+                        <div className="flex items-center gap-6">
+                            <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center text-slate-800 text-3xl font-semibold border-2 border-white shadow-sm shrink-0">
+                                {initials}
+                            </div>
+                            <div>
+                                <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">{fullName}</h1>
+                                <div className="flex flex-wrap items-center gap-3 text-slate-500 text-sm">
+                                    <span>{personalInfo.email || "No Email"}</span>
+                                    {personalInfo.phone && (
+                                        <>
+                                            <span className="text-slate-300">•</span>
+                                            <span>{personalInfo.phone}</span>
+                                        </>
+                                    )}
+                                    <span className="text-slate-300">•</span>
+                                    <span>ID: {applicationId}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 mt-4 md:mt-0">
                             <StatusBadge status={application.status} />
                         </div>
-                        <p className="text-slate-500 text-sm mt-1">
-                            {personalInfo.email || "No Email"} · Application ID: {applicationId}
-                        </p>
                     </div>
                 </div>
+            </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                    
                     {/* Left Column: Application Data */}
-                    <div className="lg:col-span-2 space-y-6">
-                        {/* Personal Information */}
-                        <Card>
-                            <CardHeader><CardTitle>Personal Information</CardTitle></CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                                    <InfoRow label="First Name" value={personalInfo.firstName} />
-                                    <InfoRow label="Last Name" value={personalInfo.lastName} />
-                                    <InfoRow label="Email" value={personalInfo.email} />
-                                    <InfoRow label="Phone" value={personalInfo.phone} />
-                                    <InfoRow label="Date of Birth" value={personalInfo.dateOfBirth} />
-                                    <InfoRow label="Gender" value={personalInfo.gender} />
-                                    <InfoRow label="Nationality" value={personalInfo.nationality} />
-                                    <InfoRow label="College" value={personalInfo.college} />
-                                    <InfoRow label="Year of Study" value={personalInfo.yearOfStudy} />
-                                    <InfoRow label="Subjects" value={personalInfo.subjects?.join(', ')} />
-                                </div>
-                            </CardContent>
-                        </Card>
+                    <div className="lg:col-span-2 space-y-12">
+                        
+                        {/* Personal Details Section */}
+                        <section>
+                            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-6 border-b border-slate-200 pb-2">Profile</h3>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-8 gap-x-6">
+                                <InfoRow label="Gender" value={personalInfo.gender} />
+                                <InfoRow label="Date of Birth" value={personalInfo.dateOfBirth} />
+                                <InfoRow label="Nationality" value={personalInfo.nationality} />
+                                <InfoRow label="University / College" value={personalInfo.college} />
+                                <InfoRow label="Year of Study" value={personalInfo.yearOfStudy} />
+                                <InfoRow label="Primary Subjects" value={personalInfo.subjects?.join(', ')} />
+                            </div>
+                        </section>
 
-                        {/* Essays */}
+                        {/* Essays Section */}
                         {essays && Object.keys(essays).length > 0 && (
-                            <Card>
-                                <CardHeader><CardTitle>Essays</CardTitle></CardHeader>
-                                <CardContent className="space-y-6">
+                            <section>
+                                <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-6 border-b border-slate-200 pb-2">Written Answers</h3>
+                                <div className="space-y-10">
                                     {essays.aboutYou && (
-                                        <div>
-                                            <h4 className="text-sm font-medium text-slate-700 mb-2">About You</h4>
-                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{essays.aboutYou}</p>
-                                        </div>
+                                        <EssayBlock title="About Yourself" content={essays.aboutYou} />
                                     )}
                                     {essays.subjectPassion && (
-                                        <div>
-                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Subject Passion</h4>
-                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{essays.subjectPassion}</p>
-                                        </div>
+                                        <EssayBlock title="Passion for Subject" content={essays.subjectPassion} />
                                     )}
                                     {essays.academyMotivation && (
-                                        <div>
-                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Academy Motivation</h4>
-                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{essays.academyMotivation}</p>
-                                        </div>
+                                        <EssayBlock title="Motivation for Jianshan Academy" content={essays.academyMotivation} />
                                     )}
                                     {travel.excitement && (
-                                        <div>
-                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Excitement about China</h4>
-                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{travel.excitement}</p>
-                                        </div>
+                                        <EssayBlock title="Excitement about China" content={travel.excitement} />
                                     )}
                                     {travel.dynamics && (
-                                        <div>
-                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Group Dynamics</h4>
-                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{travel.dynamics}</p>
-                                        </div>
+                                        <EssayBlock title="Group Dynamics Experience" content={travel.dynamics} />
                                     )}
-                                </CardContent>
-                            </Card>
-                        )}
-
-                        <Card>
-                            <CardHeader><CardTitle>Logistics &amp; Confirmations</CardTitle></CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-1 gap-3">
-                                        <div className="bg-slate-50 border border-slate-100 rounded-lg p-4">
-                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Programme Dates &amp; Availability</h4>
-                                            <p className="text-sm text-slate-600">Academy: August 2 to August 8 in Hangzhou. China Trip: August 8 to August 18, starting in Hangzhou and ending in Beijing.</p>
-                                            <p className="text-sm text-slate-600 mt-2">Required arrival: August 1 in Hangzhou, ideally before 17:00 China Time. Return departure: August 18 from Beijing.</p>
-                                            <p className="text-sm mt-3 font-medium text-slate-800">Confirmed: {availability.confirmsProgramDates ? "Yes" : "No"}</p>
-                                        </div>
-                                        <div className="bg-slate-50 border border-slate-100 rounded-lg p-4">
-                                            <h4 className="text-sm font-medium text-slate-700 mb-2">International Flights</h4>
-                                            <p className="text-sm text-slate-600">International return flights are not covered. Applicants must arrange and pay for their own travel to China and back home.</p>
-                                            <p className="text-sm text-slate-600 mt-2">Applicants are also asked to check likely flight options and prices before applying.</p>
-                                            <p className="text-sm mt-3 font-medium text-slate-800">Confirmed: {availability.confirmsFlightCosts ? "Yes" : "No"}</p>
-                                        </div>
-                                        <div className="bg-slate-50 border border-slate-100 rounded-lg p-4">
-                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Visa Responsibility</h4>
-                                            <p className="text-sm text-slate-600">Applicants must confirm for themselves whether they can enter China visa-free or whether they need to apply for a visa.</p>
-                                            <p className="text-sm text-slate-600 mt-2">If a visa is needed, the applicant must complete the application independently and cover any related costs.</p>
-                                            <p className="text-sm mt-3 font-medium text-slate-800">Confirmed: {availability.confirmsVisaResponsibility ? "Yes" : "No"}</p>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 gap-4 pt-2 border-t border-slate-100">
-                                        <InfoRow label="Dietary Restrictions" value={availability.dietary.join(', ') + (availability.dietaryOther ? ` (${availability.dietaryOther})` : '')} />
-                                    </div>
                                 </div>
-                                {availability.additionalNotes && (
-                                    <div>
-                                        <h4 className="text-sm font-medium text-slate-700 mb-2">Additional Notes</h4>
-                                        <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{availability.additionalNotes}</p>
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-
+                            </section>
+                        )}
+                        
+                        {/* Round 2 Submission */}
                         {round2 && Object.keys(round2).length > 0 && (
-                            <Card className="border-accent/30 shadow-sm">
-                                <CardHeader className="bg-accent/5"><CardTitle className="text-accent">Round 2 Submission</CardTitle></CardHeader>
-                                <CardContent className="space-y-6 pt-6">
+                            <section>
+                                <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-6 border-b border-slate-200 pb-2 text-accent">Final Round Submission</h3>
+                                <div className="space-y-8 bg-accent/5 p-6 rounded-xl border border-accent/20">
                                     {round2.session_design_thoughts && (
-                                        <div>
-                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Session Design Thoughts</h4>
-                                            <p className="text-sm text-slate-600 whitespace-pre-wrap bg-slate-50 p-4 rounded-lg border border-slate-100">{round2.session_design_thoughts}</p>
-                                        </div>
+                                        <EssayBlock title="Session Design Thoughts" content={round2.session_design_thoughts} />
                                     )}
                                     {round2.video_url && (
                                         <div>
-                                            <h4 className="text-sm font-medium text-slate-700 mb-2">Video Presentation Link</h4>
-                                            <a href={round2.video_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline break-all">
+                                            <h4 className="text-sm font-medium text-slate-900 mb-2">Video Presentation</h4>
+                                            <a href={round2.video_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:text-accent/80 font-medium hover:underline flex items-center gap-1 break-all">
                                                 {round2.video_url}
                                             </a>
                                         </div>
                                     )}
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </section>
                         )}
 
-                        {/* Timeline */}
-                        <Card>
-                            <CardHeader><CardTitle>Timeline</CardTitle></CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                                    <InfoRow label="Created" value={application.createdAt ? new Date(application.createdAt).toLocaleString() : undefined} />
-                                    <InfoRow label="Submitted" value={application.submittedAt ? new Date(application.submittedAt).toLocaleString() : undefined} />
-                                    <InfoRow label="Last Updated" value={application.lastUpdatedAt ? new Date(application.lastUpdatedAt).toLocaleString() : undefined} />
-                                    <InfoRow label="Decision Released" value={application.decisionReleasedAt ? new Date(application.decisionReleasedAt).toLocaleString() : undefined} />
+                        {/* Logistics */}
+                        <section>
+                            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-6 border-b border-slate-200 pb-2">Logistics & Confirmations</h3>
+                            <div className="bg-white border text-sm border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="p-5 border-b border-slate-100 flex justify-between items-start gap-4">
+                                    <div>
+                                        <div className="font-medium text-slate-900">Dates & Availability</div>
+                                        <div className="text-slate-500 mt-1">Confirmed attendance for Academy (Aug 2-8) and Trip (Aug 8-18).</div>
+                                    </div>
+                                    <ConfirmationBadge confirmed={availability.confirmsProgramDates} />
                                 </div>
-                            </CardContent>
-                        </Card>
+                                <div className="p-5 border-b border-slate-100 flex justify-between items-start gap-4">
+                                    <div>
+                                        <div className="font-medium text-slate-900">Flight Costs</div>
+                                        <div className="text-slate-500 mt-1">Understands they must arrange and pay for international return flights.</div>
+                                    </div>
+                                    <ConfirmationBadge confirmed={availability.confirmsFlightCosts} />
+                                </div>
+                                <div className="p-5 border-b border-slate-100 flex justify-between items-start gap-4">
+                                    <div>
+                                        <div className="font-medium text-slate-900">Visa Responsibility</div>
+                                        <div className="text-slate-500 mt-1">Understands responsibility to check visa requirements and apply if needed.</div>
+                                    </div>
+                                    <ConfirmationBadge confirmed={availability.confirmsVisaResponsibility} />
+                                </div>
+                                <div className="p-5 bg-slate-50">
+                                    <div className="font-medium text-slate-900 mb-3">Dietary & Additional Requirements</div>
+                                    <InfoRow label="Dietary Restrictions" value={availability.dietary.join(', ') + (availability.dietaryOther ? ` (${availability.dietaryOther})` : '')} />
+                                    {availability.additionalNotes && (
+                                        <div className="mt-4">
+                                            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Additional Notes</h4>
+                                            <p className="text-slate-700 whitespace-pre-wrap">{availability.additionalNotes}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </section>
+
                     </div>
 
-                    {/* Right Column: Decision + Notes */}
-                    <div className="space-y-6">
+                    {/* Right Column: Decision + Notes + Timeline */}
+                    <div className="space-y-8">
                         <DecisionCard
                             applicationId={applicationId!}
                             currentInternalDecision={application.adminData?.internalDecision}
                             currentPublicStatus={application.status}
-                            onUpdate={fetchApplication}
+                            onUpdate={() => fetchApplication(true)}
                         />
 
                         <NotesSection
                             applicationId={applicationId!}
                             notes={application.adminData?.notes || []}
-                            onNoteAdded={fetchApplication}
+                            onNoteAdded={() => fetchApplication(true)}
                         />
+                        
+                        {/* Timeline Sidebar Style */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">Timeline</h3>
+                            <div className="space-y-4 text-sm">
+                                <TimelineRow label="Started" date={application.createdAt} />
+                                <TimelineRow label="Submitted" date={application.submittedAt} />
+                                <TimelineRow label="Updated" date={application.lastUpdatedAt} />
+                                <TimelineRow label="Decision" date={application.decisionReleasedAt} />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     );
 }
 
 function InfoRow({ label, value }: { label: string; value?: string | null }) {
     return (
         <div>
-            <dt className="text-slate-500 text-xs font-medium uppercase tracking-wide">{label}</dt>
-            <dd className="text-slate-900 mt-0.5">{value || <span className="text-slate-400">-</span>}</dd>
+            <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">{label}</dt>
+            <dd className="text-slate-900 font-medium">{value && value !== '' ? value : <span className="text-slate-400 font-normal italic">None</span>}</dd>
+        </div>
+    );
+}
+
+function EssayBlock({ title, content }: { title: string; content: string }) {
+    return (
+        <div>
+            <h4 className="text-base font-semibold text-slate-900 mb-3">{title}</h4>
+            <div className="prose prose-slate prose-sm max-w-none text-slate-700 leading-relaxed font-serif text-[15px]">
+                {content.split('\n').map((paragraph, idx) => (
+                    paragraph.trim() ? <p key={idx} className="mb-4">{paragraph}</p> : <br key={idx} />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function ConfirmationBadge({ confirmed }: { confirmed: boolean }) {
+    return confirmed ? (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200 shrink-0">
+            Confirmed
+        </span>
+    ) : (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+            Pending
+        </span>
+    );
+}
+
+function TimelineRow({ label, date }: { label: string; date?: number | string | Date | null }) {
+    if (!date) return null;
+    return (
+        <div className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0 last:pb-0">
+            <span className="text-slate-500">{label}</span>
+            <span className="text-slate-900 font-medium">{new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
         </div>
     );
 }

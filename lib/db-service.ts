@@ -114,7 +114,7 @@ export const dbService = {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             to: email,
-                            subject: 'Application Received – Cambridge Tutor Programme',
+                            subject: 'Application Update - Jianshan Scholarship 2026',
                             type: 'submission',
                             name,
                         }),
@@ -177,7 +177,7 @@ export const dbService = {
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 to: email,
-                                subject: 'Application Update – Cambridge Tutor Programme',
+                                subject: 'Application Update - Jianshan Scholarship 2026',
                                 type: 'decision',
                                 name,
                                 decision: newStatus,
@@ -259,8 +259,8 @@ export const dbService = {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         to: email,
-                        subject: 'Application Update – Cambridge Tutor Programme',
-                        type: 'decision',
+                        subject: 'Application Update - Jianshan Scholarship 2026',
+                        type: publicStatus === 'shortlisted' ? 'round2' : 'decision',
                         name,
                         decision: publicStatus,
                     }),

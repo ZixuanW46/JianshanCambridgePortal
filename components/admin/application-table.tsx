@@ -49,6 +49,13 @@ const getDecisionColor = (decision: string | null | undefined) => {
     return option ? option.color : 'bg-slate-100 text-slate-700';
 };
 
+const getInitials = (name: string) => {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
 export function AdminApplicationTable({ applications }: AdminApplicationTableProps) {
     const router = useRouter();
     const [localApps, setLocalApps] = useState<Application[]>(applications);
@@ -299,9 +306,16 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                                         <Checkbox checked={selectedIds.has(app.id!)} onCheckedChange={() => toggleSelectRow(app.id!)} disabled={!isEligibleForRelease(app)} className="border-slate-300 rounded w-4 h-4" />
                                     </TableCell>
                                     <TableCell className="px-6 py-4">
-                                        <div>
-                                            <div className="text-slate-900 font-medium">{app.section1_personal?.full_name || "No Name"}</div>
-                                            <div className="text-slate-500 text-sm">{app.section1_personal?.personal_email || app.section1_personal?.cambridge_email || "No Email"}</div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 font-semibold text-xs border border-slate-200">
+                                                {getInitials(app.section1_personal?.full_name || "No Name")}
+                                            </div>
+                                            <div>
+                                                <div className="text-slate-900 font-medium text-sm leading-tight">{app.section1_personal?.full_name || "No Name"}</div>
+                                                <div className="text-slate-500 text-xs mt-0.5 max-w-[200px] truncate" title={app.section1_personal?.personal_email || app.section1_personal?.cambridge_email || "No Email"}>
+                                                    {app.section1_personal?.personal_email || app.section1_personal?.cambridge_email || "No Email"}
+                                                </div>
+                                            </div>
                                         </div>
                                     </TableCell>
                                     <TableCell className="px-6 py-4"><StatusBadge status={app.status} /></TableCell>
