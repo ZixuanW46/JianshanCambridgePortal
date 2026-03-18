@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Send } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Save, Send } from "lucide-react";
 
 import { useAuth } from "@/lib/auth-context";
 import { Application } from "@/lib/types";
@@ -146,19 +146,20 @@ const VIDEO_REQUIREMENTS = [
     "Please keep yourself centred in frame",
 ];
 
-const FINAL_CONFIRMATIONS = [
-    {
-        key: "confirms_theme_preparation",
-        label: "I understand that, if selected, I will be expected to design and prepare my teaching around the Jianshan camp model and this year's theme.",
-    },
-    {
-        key: "confirms_ab_session_delivery",
-        label: "I understand that I will be expected to prepare one Type A session and one Type B session, and deliver them to different student groups during camp.",
-    },
-    {
-        key: "confirms_student_facing_role",
-        label: "I understand that teaching at Jianshan is not just about explaining knowledge, but also about engaging students, making ideas accessible, and encouraging participation.",
-    },
+type ConfirmationState = {
+    confirms_theme_preparation: boolean;
+    confirms_ab_session_delivery: boolean;
+    confirms_student_facing_role: boolean;
+    confirms_workload_readiness: boolean;
+    confirms_deposit_terms: boolean;
+    confirms_flight_costs: boolean;
+    confirms_visa_responsibility: boolean;
+};
+
+const FINAL_CONFIRMATIONS: Array<{
+    key: keyof ConfirmationState;
+    label: string;
+}> = [
     {
         key: "confirms_workload_readiness",
         label: "I understand that the expected teaching workload during camp is around 3-4 hours per day, and I am prepared for that responsibility.",
@@ -177,7 +178,27 @@ const FINAL_CONFIRMATIONS = [
     },
 ] as const;
 
-type ConfirmationKey = typeof FINAL_CONFIRMATIONS[number]["key"];
+type ConfirmationKey = keyof ConfirmationState;
+
+function buildRound2Snapshot(input: {
+    typeATitle: string;
+    typeAThoughts: string;
+    typeBTitle: string;
+    typeBThoughts: string;
+    videoUrl: string;
+    finalRoundConcerns: string;
+    confirmations: ConfirmationState;
+}) {
+    return JSON.stringify({
+        type_a_session_title: input.typeATitle,
+        type_a_session_thoughts: input.typeAThoughts,
+        type_b_session_title: input.typeBTitle,
+        type_b_session_thoughts: input.typeBThoughts,
+        video_url: input.videoUrl,
+        final_round_concerns: input.finalRoundConcerns,
+        confirmations: input.confirmations,
+    });
+}
 
 
 
@@ -187,7 +208,11 @@ export default function ApplyRound2Page() {
     const [app, setApp] = useState<Application | null>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [savingDraft, setSavingDraft] = useState(false);
     const [hasReadIntro, setHasReadIntro] = useState(false);
+    const [isDirty, setIsDirty] = useState(false);
+    const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+    const [initialDraftSnapshot, setInitialDraftSnapshot] = useState("");
 
     const [typeATitle, setTypeATitle] = useState("");
     const [typeAThoughts, setTypeAThoughts] = useState("");
@@ -195,7 +220,7 @@ export default function ApplyRound2Page() {
     const [typeBThoughts, setTypeBThoughts] = useState("");
     const [videoUrl, setVideoUrl] = useState("");
     const [finalRoundConcerns, setFinalRoundConcerns] = useState("");
-    const [confirmations, setConfirmations] = useState<Record<ConfirmationKey, boolean>>({
+    const [confirmations, setConfirmations] = useState<ConfirmationState>({
         confirms_theme_preparation: false,
         confirms_ab_session_delivery: false,
         confirms_student_facing_role: false,
@@ -233,13 +258,7 @@ export default function ApplyRound2Page() {
 
                 const round2 = myApp.section6_round_2;
                 if (round2) {
-                    setTypeATitle(round2.type_a_session_title || "");
-                    setTypeAThoughts(round2.type_a_session_thoughts || round2.session_design_thoughts || "");
-                    setTypeBTitle(round2.type_b_session_title || "");
-                    setTypeBThoughts(round2.type_b_session_thoughts || "");
-                    setVideoUrl(round2.video_url || "");
-                    setFinalRoundConcerns(round2.final_round_concerns || "");
-                    setConfirmations({
+                    const loadedConfirmations = {
                         confirms_theme_preparation: !!round2.confirms_theme_preparation,
                         confirms_ab_session_delivery: !!round2.confirms_ab_session_delivery,
                         confirms_student_facing_role: !!round2.confirms_student_facing_role,
@@ -247,7 +266,49 @@ export default function ApplyRound2Page() {
                         confirms_deposit_terms: !!round2.confirms_deposit_terms,
                         confirms_flight_costs: !!round2.confirms_flight_costs,
                         confirms_visa_responsibility: !!round2.confirms_visa_responsibility,
-                    });
+                    };
+                    const loadedTypeATitle = round2.type_a_session_title || "";
+                    const loadedTypeAThoughts = round2.type_a_session_thoughts || round2.session_design_thoughts || "";
+                    const loadedTypeBTitle = round2.type_b_session_title || "";
+                    const loadedTypeBThoughts = round2.type_b_session_thoughts || "";
+                    const loadedVideoUrl = round2.video_url || "";
+                    const loadedFinalRoundConcerns = round2.final_round_concerns || "";
+
+                    setTypeATitle(loadedTypeATitle);
+                    setTypeAThoughts(loadedTypeAThoughts);
+                    setTypeBTitle(loadedTypeBTitle);
+                    setTypeBThoughts(loadedTypeBThoughts);
+                    setVideoUrl(loadedVideoUrl);
+                    setFinalRoundConcerns(loadedFinalRoundConcerns);
+                    setConfirmations(loadedConfirmations);
+                    setInitialDraftSnapshot(buildRound2Snapshot({
+                        typeATitle: loadedTypeATitle,
+                        typeAThoughts: loadedTypeAThoughts,
+                        typeBTitle: loadedTypeBTitle,
+                        typeBThoughts: loadedTypeBThoughts,
+                        videoUrl: loadedVideoUrl,
+                        finalRoundConcerns: loadedFinalRoundConcerns,
+                        confirmations: loadedConfirmations,
+                    }));
+                    setDraftSavedAt(myApp.lastUpdatedAt || null);
+                } else {
+                    setInitialDraftSnapshot(buildRound2Snapshot({
+                        typeATitle: "",
+                        typeAThoughts: "",
+                        typeBTitle: "",
+                        typeBThoughts: "",
+                        videoUrl: "",
+                        finalRoundConcerns: "",
+                        confirmations: {
+                            confirms_theme_preparation: false,
+                            confirms_ab_session_delivery: false,
+                            confirms_student_facing_role: false,
+                            confirms_workload_readiness: false,
+                            confirms_deposit_terms: false,
+                            confirms_flight_costs: false,
+                            confirms_visa_responsibility: false,
+                        },
+                    }));
                 }
             } catch (err) {
                 console.error("Failed to fetch application:", err);
@@ -257,6 +318,89 @@ export default function ApplyRound2Page() {
         };
         fetchApp();
     }, [router, user]);
+
+    useEffect(() => {
+        if (loading || !initialDraftSnapshot) return;
+
+        const currentSnapshot = buildRound2Snapshot({
+            typeATitle,
+            typeAThoughts,
+            typeBTitle,
+            typeBThoughts,
+            videoUrl,
+            finalRoundConcerns,
+            confirmations,
+        });
+
+        setIsDirty(currentSnapshot !== initialDraftSnapshot);
+    }, [
+        confirmations,
+        finalRoundConcerns,
+        initialDraftSnapshot,
+        loading,
+        typeAThoughts,
+        typeATitle,
+        typeBThoughts,
+        typeBTitle,
+        videoUrl,
+    ]);
+
+    const formatSavedTime = (timestamp: string | null) => {
+        if (!timestamp) return "";
+
+        const date = new Date(timestamp);
+        if (Number.isNaN(date.getTime())) return "";
+
+        return new Intl.DateTimeFormat("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+        }).format(date);
+    };
+
+    const handleSaveDraft = async () => {
+        if (!user || savingDraft || submitting) return;
+
+        setError(null);
+        setSavingDraft(true);
+
+        try {
+            const savedAt = new Date().toISOString();
+            const normalizedRound2Data = {
+                type_a_session_title: typeATitle.trim(),
+                type_a_session_thoughts: typeAThoughts.trim(),
+                type_b_session_title: typeBTitle.trim(),
+                type_b_session_thoughts: typeBThoughts.trim(),
+                video_url: videoUrl.trim(),
+                confirms_theme_preparation: confirmations.confirms_theme_preparation,
+                confirms_ab_session_delivery: confirmations.confirms_ab_session_delivery,
+                confirms_student_facing_role: confirmations.confirms_student_facing_role,
+                confirms_workload_readiness: confirmations.confirms_workload_readiness,
+                confirms_deposit_terms: confirmations.confirms_deposit_terms,
+                confirms_flight_costs: confirmations.confirms_flight_costs,
+                confirms_visa_responsibility: confirmations.confirms_visa_responsibility,
+                final_round_concerns: finalRoundConcerns.trim() || null,
+            };
+
+            await dbService.saveRound2Draft(user.uid, normalizedRound2Data);
+
+            setDraftSavedAt(savedAt);
+            setInitialDraftSnapshot(buildRound2Snapshot({
+                typeATitle: normalizedRound2Data.type_a_session_title,
+                typeAThoughts: normalizedRound2Data.type_a_session_thoughts,
+                typeBTitle: normalizedRound2Data.type_b_session_title,
+                typeBThoughts: normalizedRound2Data.type_b_session_thoughts,
+                videoUrl: normalizedRound2Data.video_url,
+                finalRoundConcerns: normalizedRound2Data.final_round_concerns || "",
+                confirmations,
+            }));
+            setIsDirty(false);
+        } catch (err) {
+            console.error("Draft save failed:", err);
+            setError("We couldn't save your draft just now. Please try again.");
+        } finally {
+            setSavingDraft(false);
+        }
+    };
 
     const handleConfirmationChange = (key: ConfirmationKey, checked: boolean) => {
         setConfirmations(prev => ({
@@ -411,6 +555,35 @@ export default function ApplyRound2Page() {
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" /> Back to Intro
                     </Button>
+
+                    <div className="flex items-center gap-3">
+                        <p className={cn(
+                            "hidden text-sm font-medium sm:block",
+                            isDirty ? "text-amber-700" : "text-emerald-700"
+                        )}>
+                            {isDirty ? "Unsaved changes" : draftSavedAt ? `Saved at ${formatSavedTime(draftSavedAt)}` : "Ready to save"}
+                        </p>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleSaveDraft}
+                            disabled={savingDraft || submitting}
+                            className="rounded-full border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
+                        >
+                            {savingDraft ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="mr-2 h-4 w-4" />
+                                    Save Draft
+                                </>
+                            )}
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -742,4 +915,3 @@ function PromptField({
         </div>
     );
 }
-

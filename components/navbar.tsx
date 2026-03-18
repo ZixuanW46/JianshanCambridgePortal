@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, User as UserIcon, LogOut, LayoutDashboard, HelpCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { SCHOLARSHIP_FAQ_URL } from "@/lib/constants";
 
 export function Navbar() {
     const { user, logout, isAdmin } = useAuth();
@@ -82,12 +83,12 @@ export function Navbar() {
 
                         {/* Standard User Links */}
                         {!isAdmin && (
-                            <Link
-                                href="/faq"
-                                className={cn("text-sm font-medium transition-colors hover:text-primary hidden sm:block", pathname === '/faq' ? "text-primary" : "text-muted-foreground")}
+                            <a
+                                href={SCHOLARSHIP_FAQ_URL}
+                                className="text-sm font-medium transition-colors hover:text-primary hidden sm:block text-muted-foreground"
                             >
                                 FAQ
-                            </Link>
+                            </a>
                         )}
 
                         {user ? (
@@ -132,8 +133,8 @@ export function Navbar() {
                     <div className="sm:hidden absolute top-16 left-0 right-0 border-b bg-white/95 backdrop-blur-md shadow-lg animate-in slide-in-from-top-2 fade-in duration-200 z-40">
                         <nav className="flex flex-col">
                             {!isAdmin && (
-                                <Link
-                                    href="/faq"
+                                <a
+                                    href={SCHOLARSHIP_FAQ_URL}
                                     onClick={() => setIsMenuOpen(false)}
                                     className="flex items-center gap-3 px-6 py-4 text-base font-medium text-foreground bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors"
                                 >
@@ -141,7 +142,7 @@ export function Navbar() {
                                         <HelpCircle className="h-4 w-4" />
                                     </div>
                                     FAQ
-                                </Link>
+                                </a>
                             )}
 
                             {isAdmin && (

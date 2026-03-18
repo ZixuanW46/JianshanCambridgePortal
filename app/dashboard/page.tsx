@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import Image from "next/image";
 import { OfferLetterTemplate } from "@/components/offer-letter-template";
 import { generateOfferPdf } from "@/lib/generate-offer-pdf";
+import { SCHOLARSHIP_FAQ_URL } from "@/lib/constants";
 
 // --- Components ---
 
@@ -572,7 +573,7 @@ export default function DashboardPage() {
                     <div className="bg-primary rounded-xl p-6 text-white relative overflow-hidden">
                         <div className="relative z-10">
                             <h3 className="font-bold text-lg mb-2">Need Help?</h3>
-                            <p className="text-sm text-white/80 mb-4 opacity-90">Please check the <Link href="/faq" className="mx-1 font-bold hover:underline cursor-pointer">FAQ</Link> first; if your issue is not resolved, feel free to contact our team.</p>
+                            <p className="text-sm text-white/80 mb-4 opacity-90">Please check the <a href={SCHOLARSHIP_FAQ_URL} className="mx-1 font-bold hover:underline cursor-pointer">FAQ</a> first; if your issue is not resolved, feel free to contact our team.</p>
                             <Dialog>
                                 <DialogTrigger asChild>
                                     <Button size="sm" className="w-full sm:w-auto bg-white/20 hover:bg-white/30 text-white border-0">
@@ -589,7 +590,7 @@ export default function DashboardPage() {
                                     </DialogHeader>
                                     <div className="flex flex-col items-center justify-center py-6 space-y-4">
                                         <Button className="bg-primary hover:bg-primary/90 text-white font-bold h-10 rounded-lg px-8" asChild>
-                                            <a href="mailto:info@jianshanacademy.cn">
+                                            <a href="mailto:camcapy@cambridgesu.co.uk">
                                                 <Mail className="mr-2 h-4 w-4" />
                                                 Email Us
                                             </a>

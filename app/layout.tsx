@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Cambridge Tutor Programme | Jianshan Academy",
+  title: "Portal - Jianshan Scholarship",
   description: "Apply to be a tutor for the Cambridge Academic Mentoring Programme. Share your knowledge, inspire the next generation.",
 };
 

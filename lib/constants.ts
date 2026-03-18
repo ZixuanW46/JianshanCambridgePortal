@@ -9,6 +9,8 @@ export const PROGRAMME_INFO = {
     website: 'https://jianshanacademy.com',
 };
 
+export const SCHOLARSHIP_FAQ_URL = 'https://scholarship.jianshanacademy.com#faq';
+
 export const PROGRAMME_DATES = {
     applicationDeadline: '15 May 2026',
     interviewPeriod: 'May – June 2026',

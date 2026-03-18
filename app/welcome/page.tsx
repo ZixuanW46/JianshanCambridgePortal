@@ -6,6 +6,7 @@ import { ArrowRight, CheckCircle, FileText } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { dbService } from "@/lib/db-service";
 import { Application } from "@/lib/types";
+import { SCHOLARSHIP_FAQ_URL } from "@/lib/constants";
 
 export default function WelcomePage() {
     const [imageLoaded, setImageLoaded] = useState(false);
@@ -63,10 +64,10 @@ export default function WelcomePage() {
                     </p>
 
                     <div className="flex flex-col w-full gap-3 mt-8 items-center">
-                        <Link href="/faq" className="flex w-full max-w-[320px] items-center justify-center rounded-lg h-12 px-6 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium transition-colors">
+                        <a href={SCHOLARSHIP_FAQ_URL} className="flex w-full max-w-[320px] items-center justify-center rounded-lg h-12 px-6 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium transition-colors">
                             <FileText className="h-4 w-4 mr-2" />
                             View Programme Details
-                        </Link>
+                        </a>
 
                         <Link href="/apply" className="group relative flex w-full max-w-[320px] items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-accent hover:bg-accent/90 text-primary text-base font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5">
                             <span className="mr-2">Complete Application</span>

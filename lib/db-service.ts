@@ -138,6 +138,17 @@ export const dbService = {
         });
     },
 
+    // Save round 2 draft without changing the application status
+    async saveRound2Draft(userId: string, round2Data: Partial<NonNullable<Application['section6_round_2']>>) {
+        const timestamp = new Date().toISOString();
+        const docRef = doc(db, COLLECTION, userId);
+
+        await updateDoc(docRef, {
+            section6_round_2: round2Data,
+            lastUpdatedAt: timestamp,
+        });
+    },
+
     // Admin: Get all applications (requires admin token)
     async getAllApplications(): Promise<Application[]> {
         // This should be called from server-side or via API route for security

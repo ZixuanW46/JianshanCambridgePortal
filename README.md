@@ -162,6 +162,65 @@ JianshanAppPortal/
 ### 身份认证配置
 在 [身份认证控制台](https://tcb.cloud.tencent.com/dev?envId=cloud1-6gfr24p5f5b51c80#/identity/login-manage) 配置登录方式（邮箱、手机号、微信等）。
 
+### Admin 用户设置
+
+当前项目的 admin 权限不是在 Firebase Console 里手动勾选的，而是通过 Firebase Auth Custom Claims 设置的。
+
+- 前端登录后会读取 `claims.admin`
+- 若 `claims.admin === true`，登录成功后会直接跳转到 `/admin/dashboard`
+- Firestore 规则也依赖 `request.auth.token.admin == true` 放行管理员读取全部申请
+
+对应代码位置：
+
+- `app/api/admin/set-admin/route.ts`
+- `app/login/page.tsx`
+- `lib/auth-context.tsx`
+- `firestore.rules`
+
+#### 给某个用户设置为 admin
+
+调用现有接口：
+
+```bash
+curl -X POST https://portal.jianshanacademy.com/api/admin/set-admin \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "someone@example.com",
+    "isAdmin": true,
+    "secret": "你的 ADMIN_SETUP_SECRET"
+  }'
+```
+
+说明：
+
+- `email`: 目标用户邮箱
+- `isAdmin: true`: 设为 admin
+- `isAdmin: false`: 取消 admin
+- `secret`: 需要与服务端环境变量 `ADMIN_SETUP_SECRET` 一致
+
+#### 已验证示例
+
+2026-03-18 已通过以下方式成功为 `leopold.dai.07@gmail.com` 设置 admin：
+
+```bash
+curl -X POST https://portal.jianshanacademy.com/api/admin/set-admin \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "leopold.dai.07@gmail.com",
+    "isAdmin": true,
+    "secret": "从本地或线上环境读取的 ADMIN_SETUP_SECRET"
+  }'
+```
+
+接口成功返回后，目标用户需要退出并重新登录一次，刷新 Firebase ID token，之后会自动进入 admin dashboard。
+
+#### 注意事项
+
+- Firebase Console 目前不能直接在用户页面里手动编辑 custom claims
+- 如果用户已经处于登录状态，claim 更新后通常不会立刻生效，必须重新登录
+- 线上正式域名是 `https://portal.jianshanacademy.com`
+- 当前 `app/api/admin/set-admin/route.ts` 中还保留了默认兜底 secret，仅建议开发阶段使用，生产环境应只依赖 `ADMIN_SETUP_SECRET`
+
 ### 云存储管理
 在 [云存储控制台](https://tcb.cloud.tencent.com/dev?envId=cloud1-6gfr24p5f5b51c80#/storage) 管理文件和配置 CDN。
 

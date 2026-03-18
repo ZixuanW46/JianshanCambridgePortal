@@ -113,11 +113,11 @@ export default function FAQPage() {
                         Get in touch with our admissions team and we&apos;ll be happy to help.
                     </p>
                     <a
-                        href="mailto:tutors@jianshanacademy.com"
+                        href="mailto:camcapy@cambridgesu.co.uk"
                         className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 px-6 py-3 rounded-xl font-medium transition-colors"
                     >
                         <Mail className="w-4 h-4" />
-                        tutors@jianshanacademy.com
+                        camcapy@cambridgesu.co.uk
                     </a>
                 </motion.div>
             </section>
