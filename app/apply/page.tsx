@@ -21,7 +21,7 @@ export default function ApplyPage() {
 
     useEffect(() => {
         if (!authLoading && !user) {
-            router.push('/login');
+            router.replace('/');
         }
     }, [user, authLoading, router]);
 

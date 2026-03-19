@@ -10,9 +10,9 @@ import {
     getDocs,
     arrayUnion,
     deleteField,
-    serverTimestamp,
 } from 'firebase/firestore';
 import { Application } from '@/lib/types';
+import { getSyncedInternalDecision } from '@/lib/admin-workflow';
 
 const COLLECTION = 'applications';
 
@@ -67,7 +67,7 @@ export const dbService = {
         const timestamp = new Date().toISOString();
         const docRef = doc(db, COLLECTION, userId);
 
-        const updates: Record<string, any> = {
+        const updates: Record<string, unknown> = {
             lastUpdatedAt: timestamp,
         };
 
@@ -256,6 +256,7 @@ export const dbService = {
 
         await updateDoc(docRef, {
             status: publicStatus,
+            decisionReleasedAt: timestamp,
             lastUpdatedAt: timestamp,
         });
 
@@ -299,23 +300,68 @@ export const dbService = {
         });
     },
 
-    // Applicant: Confirm Enrollment (accepted → enrolled)
-    async confirmEnrollment(userId: string) {
+    // Applicant: Start acceptance flow (accepted → accepted_pending_payment)
+    async startOfferAcceptance(userId: string) {
         const timestamp = new Date().toISOString();
         const docRef = doc(db, COLLECTION, userId);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+            throw new Error("Application not found.");
+        }
+
+        const data = docSnap.data();
+        const currentStatus = data.status;
+
         await updateDoc(docRef, {
-            status: 'enrolled',
+            status: currentStatus === 'accepted_paid' ? 'accepted_paid' : 'accepted_pending_payment',
+            'offerAcceptance.startedAt': data.offerAcceptance?.startedAt || timestamp,
             lastUpdatedAt: timestamp,
         });
     },
 
-    // Admin: Progress application to under_review
-    async progressApplication(userId: string) {
+    // Applicant: Submit deposit confirmation and passport details
+    async submitOfferAcceptance(userId: string, acceptanceData: NonNullable<Application['offerAcceptance']>) {
         const timestamp = new Date().toISOString();
         const docRef = doc(db, COLLECTION, userId);
+
         await updateDoc(docRef, {
-            status: 'under_review',
+            status: 'accepted_paid',
+            'offerAcceptance.full_name_on_passport': acceptanceData.full_name_on_passport || '',
+            'offerAcceptance.nationality': acceptanceData.nationality || '',
+            'offerAcceptance.passport_number': acceptanceData.passport_number || '',
+            'offerAcceptance.transfer_confirmed': !!acceptanceData.transfer_confirmed,
+            'offerAcceptance.startedAt': acceptanceData.startedAt || timestamp,
+            'offerAcceptance.submittedAt': timestamp,
             lastUpdatedAt: timestamp,
         });
+    },
+
+    // Admin: Confirm transfer has actually been received
+    async confirmPaymentReceived(userId: string) {
+        await this.moveApplicationStatus(userId, 'payment_received');
+    },
+
+    // Admin: Move application to any workflow status and sync internal decision
+    async moveApplicationStatus(userId: string, newStatus: Application['status']) {
+        const timestamp = new Date().toISOString();
+        const docRef = doc(db, COLLECTION, userId);
+        const syncedDecision = getSyncedInternalDecision(newStatus);
+
+        await updateDoc(docRef, {
+            status: newStatus,
+            'adminData.internalDecision': syncedDecision,
+            lastUpdatedAt: timestamp,
+        });
+    },
+
+    // Applicant: Confirm Enrollment (legacy alias)
+    async confirmEnrollment(userId: string) {
+        await this.startOfferAcceptance(userId);
+    },
+
+    // Admin: Progress application to under_review
+    async progressApplication(userId: string) {
+        await this.moveApplicationStatus(userId, 'under_review');
     },
 };

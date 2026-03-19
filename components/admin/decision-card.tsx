@@ -26,10 +26,10 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
     const [loading, setLoading] = useState(false);
     const [showReleaseConfirm, setShowReleaseConfirm] = useState(false);
 
-    const handleSaveDecision = async (decision: string | null) => {
+    const handleSaveDecision = async (decision: DecisionType | null) => {
         setLoading(true);
         try {
-            await dbService.setInternalDecision(applicationId, decision as any);
+            await dbService.setInternalDecision(applicationId, decision);
             onUpdate();
         } catch (e) {
             console.error("Failed to save decision", e);
@@ -51,7 +51,7 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
         }
     };
 
-    const isReleased = ['shortlisted', 'accepted', 'rejected', 'waitlisted', 'enrolled'].includes(currentPublicStatus) && !['under_review', 'round_2_submitted', 'round_2_under_review'].includes(currentPublicStatus);
+    const isReleased = ['shortlisted', 'accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received', 'rejected', 'waitlisted', 'enrolled'].includes(currentPublicStatus) && !['under_review', 'round_2_submitted', 'round_2_under_review'].includes(currentPublicStatus);
 
     const allDecisionButtons = [
         {

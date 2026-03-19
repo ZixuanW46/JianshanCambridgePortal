@@ -147,9 +147,6 @@ const VIDEO_REQUIREMENTS = [
 ];
 
 type ConfirmationState = {
-    confirms_theme_preparation: boolean;
-    confirms_ab_session_delivery: boolean;
-    confirms_student_facing_role: boolean;
     confirms_workload_readiness: boolean;
     confirms_deposit_terms: boolean;
     confirms_flight_costs: boolean;
@@ -221,9 +218,6 @@ export default function ApplyRound2Page() {
     const [videoUrl, setVideoUrl] = useState("");
     const [finalRoundConcerns, setFinalRoundConcerns] = useState("");
     const [confirmations, setConfirmations] = useState<ConfirmationState>({
-        confirms_theme_preparation: false,
-        confirms_ab_session_delivery: false,
-        confirms_student_facing_role: false,
         confirms_workload_readiness: false,
         confirms_deposit_terms: false,
         confirms_flight_costs: false,
@@ -235,7 +229,7 @@ export default function ApplyRound2Page() {
 
     useEffect(() => {
         if (!authLoading && !user) {
-            router.push("/login");
+            router.replace("/");
         }
     }, [authLoading, router, user]);
 
@@ -259,9 +253,6 @@ export default function ApplyRound2Page() {
                 const round2 = myApp.section6_round_2;
                 if (round2) {
                     const loadedConfirmations = {
-                        confirms_theme_preparation: !!round2.confirms_theme_preparation,
-                        confirms_ab_session_delivery: !!round2.confirms_ab_session_delivery,
-                        confirms_student_facing_role: !!round2.confirms_student_facing_role,
                         confirms_workload_readiness: !!round2.confirms_workload_readiness,
                         confirms_deposit_terms: !!round2.confirms_deposit_terms,
                         confirms_flight_costs: !!round2.confirms_flight_costs,
@@ -300,9 +291,6 @@ export default function ApplyRound2Page() {
                         videoUrl: "",
                         finalRoundConcerns: "",
                         confirmations: {
-                            confirms_theme_preparation: false,
-                            confirms_ab_session_delivery: false,
-                            confirms_student_facing_role: false,
                             confirms_workload_readiness: false,
                             confirms_deposit_terms: false,
                             confirms_flight_costs: false,
@@ -371,9 +359,6 @@ export default function ApplyRound2Page() {
                 type_b_session_title: typeBTitle.trim(),
                 type_b_session_thoughts: typeBThoughts.trim(),
                 video_url: videoUrl.trim(),
-                confirms_theme_preparation: confirmations.confirms_theme_preparation,
-                confirms_ab_session_delivery: confirmations.confirms_ab_session_delivery,
-                confirms_student_facing_role: confirmations.confirms_student_facing_role,
                 confirms_workload_readiness: confirmations.confirms_workload_readiness,
                 confirms_deposit_terms: confirmations.confirms_deposit_terms,
                 confirms_flight_costs: confirmations.confirms_flight_costs,
@@ -463,9 +448,6 @@ export default function ApplyRound2Page() {
                 type_b_session_title: typeBTitle.trim(),
                 type_b_session_thoughts: typeBThoughts.trim(),
                 video_url: videoUrl.trim(),
-                confirms_theme_preparation: confirmations.confirms_theme_preparation,
-                confirms_ab_session_delivery: confirmations.confirms_ab_session_delivery,
-                confirms_student_facing_role: confirmations.confirms_student_facing_role,
                 confirms_workload_readiness: confirmations.confirms_workload_readiness,
                 confirms_deposit_terms: confirmations.confirms_deposit_terms,
                 confirms_flight_costs: confirmations.confirms_flight_costs,

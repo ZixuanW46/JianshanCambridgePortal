@@ -7,7 +7,6 @@ import { Application } from "@/lib/types";
 import { dbService } from "@/lib/db-service";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DecisionCard } from "@/components/admin/decision-card";
 import { NotesSection } from "@/components/admin/notes-section";
 import Link from "next/link";
@@ -23,7 +22,7 @@ function AdminApplicationDetailContent() {
 
     useEffect(() => {
         if (!authLoading) {
-            if (!user) { router.push("/login"); return; }
+            if (!user) { router.replace("/"); return; }
             if (!isAdmin) { router.push("/dashboard"); return; }
         }
     }, [user, authLoading, isAdmin, router]);
@@ -66,7 +65,8 @@ function AdminApplicationDetailContent() {
 
     const personalInfo = {
         fullName: application.section1_personal?.full_name || 'No Name',
-        email: application.section1_personal?.personal_email || '',
+        personalEmail: application.section1_personal?.personal_email || '',
+        cambridgeEmail: application.section1_personal?.cambridge_email || '',
         phone: application.section1_personal?.phone_number || '',
         dateOfBirth: application.section1_personal?.date_of_birth || '',
         gender: (application.section1_personal?.gender === 'Other' && application.section1_personal?.gender_other)
@@ -74,11 +74,16 @@ function AdminApplicationDetailContent() {
             : (application.section1_personal?.gender || ''),
         nationality: application.section1_personal?.nationality || '',
         college: application.section1_personal?.college || '',
-        yearOfStudy: application.section1_personal?.year_of_study || '',
-        subjects: application.section1_personal?.subject ? [application.section1_personal.subject] : [],
+        yearOfStudy: application.section1_personal?.year_of_study === 'Other'
+            ? application.section1_personal?.year_of_study_other || 'Other'
+            : application.section1_personal?.year_of_study || '',
+        subject: application.section1_personal?.subject === 'Other'
+            ? application.section1_personal?.subject_other || 'Other'
+            : application.section1_personal?.subject || '',
     };
     const essays = {
         aboutYou: application.section2_about_you?.tell_us_about_yourself || '',
+        supportingFileUrl: application.section2_about_you?.additional_file_url || '',
         subjectPassion: application.section3_teaching?.subject_passion || '',
         academyMotivation: application.section3_teaching?.academy_motivation || '',
     };
@@ -99,30 +104,12 @@ function AdminApplicationDetailContent() {
 
     const round2 = application.section6_round_2;
     const hasRound2ConfirmationData = !!round2 && [
-        round2.confirms_theme_preparation,
-        round2.confirms_ab_session_delivery,
-        round2.confirms_student_facing_role,
         round2.confirms_workload_readiness,
         round2.confirms_deposit_terms,
         round2.confirms_flight_costs,
         round2.confirms_visa_responsibility,
     ].some(value => value !== undefined);
     const round2Confirmations = hasRound2ConfirmationData ? [
-        {
-            label: "Theme Preparation",
-            description: "Understands they will prepare teaching around the Jianshan model and the Future City theme.",
-            confirmed: !!round2.confirms_theme_preparation,
-        },
-        {
-            label: "A/B Session Delivery",
-            description: "Understands they must prepare one Type A and one Type B session and deliver them to different student groups.",
-            confirmed: !!round2.confirms_ab_session_delivery,
-        },
-        {
-            label: "Student-Facing Role",
-            description: "Understands the role includes engagement, clarity, accessibility, and participation, not only content delivery.",
-            confirmed: !!round2.confirms_student_facing_role,
-        },
         {
             label: "Teaching Workload",
             description: "Confirms readiness for around 3-4 hours of teaching per day during camp.",
@@ -144,6 +131,14 @@ function AdminApplicationDetailContent() {
             confirmed: !!round2.confirms_visa_responsibility,
         },
     ] : [];
+    const hasWrittenAnswers = [
+        essays.aboutYou,
+        essays.supportingFileUrl,
+        essays.subjectPassion,
+        essays.academyMotivation,
+        travel.excitement,
+        travel.dynamics,
+    ].some(Boolean);
 
     const fullName = application.section1_personal?.full_name || "No Name";
     const initials = fullName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || '?';
@@ -166,7 +161,7 @@ function AdminApplicationDetailContent() {
                             <div>
                                 <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">{fullName}</h1>
                                 <div className="flex flex-wrap items-center gap-3 text-slate-500 text-sm">
-                                    <span>{personalInfo.email || "No Email"}</span>
+                                    <span>{personalInfo.personalEmail || personalInfo.cambridgeEmail || "No Email"}</span>
                                     {personalInfo.phone && (
                                         <>
                                             <span className="text-slate-300">•</span>
@@ -195,17 +190,20 @@ function AdminApplicationDetailContent() {
                         <section>
                             <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-6 border-b border-slate-200 pb-2">Profile</h3>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-8 gap-x-6">
+                                <InfoRow label="Personal Email" value={personalInfo.personalEmail} />
+                                <InfoRow label="Cambridge Email" value={personalInfo.cambridgeEmail} />
+                                <InfoRow label="Phone Number" value={personalInfo.phone} />
                                 <InfoRow label="Gender" value={personalInfo.gender} />
                                 <InfoRow label="Date of Birth" value={personalInfo.dateOfBirth} />
                                 <InfoRow label="Nationality" value={personalInfo.nationality} />
                                 <InfoRow label="University / College" value={personalInfo.college} />
                                 <InfoRow label="Year of Study" value={personalInfo.yearOfStudy} />
-                                <InfoRow label="Primary Subjects" value={personalInfo.subjects?.join(', ')} />
+                                <InfoRow label="Subject / Programme" value={personalInfo.subject} />
                             </div>
                         </section>
 
                         {/* Essays Section */}
-                        {essays && Object.keys(essays).length > 0 && (
+                        {hasWrittenAnswers && (
                             <section>
                                 <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-6 border-b border-slate-200 pb-2">Written Answers</h3>
                                 <div className="space-y-10">
@@ -223,6 +221,19 @@ function AdminApplicationDetailContent() {
                                     )}
                                     {travel.dynamics && (
                                         <EssayBlock title="Group Dynamics Experience" content={travel.dynamics} />
+                                    )}
+                                    {essays.supportingFileUrl && (
+                                        <div>
+                                            <h4 className="text-base font-semibold text-slate-900 mb-3">Supporting File</h4>
+                                            <a
+                                                href={essays.supportingFileUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1 text-accent hover:text-accent/80 font-medium hover:underline break-all"
+                                            >
+                                                View Uploaded File
+                                            </a>
+                                        </div>
                                     )}
                                 </div>
                             </section>
@@ -276,6 +287,34 @@ function AdminApplicationDetailContent() {
                                     {round2.final_round_concerns && (
                                         <EssayBlock title="Participation / Delivery Concerns" content={round2.final_round_concerns} />
                                     )}
+                                </div>
+                            </section>
+                        )}
+
+                        {application.offerAcceptance && Object.values(application.offerAcceptance).some(value => value !== undefined && value !== "") && (
+                            <section>
+                                <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-6 border-b border-slate-200 pb-2">Offer Acceptance</h3>
+                                <div className="bg-white border text-sm border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                    <div className="p-5 border-b border-slate-100">
+                                        <InfoRow label="Full Name on Passport" value={application.offerAcceptance.full_name_on_passport || "-"} />
+                                    </div>
+                                    <div className="p-5 border-b border-slate-100">
+                                        <InfoRow label="Nationality" value={application.offerAcceptance.nationality || "-"} />
+                                    </div>
+                                    <div className="p-5 border-b border-slate-100">
+                                        <InfoRow label="Passport Number" value={application.offerAcceptance.passport_number || "-"} />
+                                    </div>
+                                    <div className="p-5 border-b border-slate-100 flex justify-between items-start gap-4">
+                                        <div>
+                                            <div className="font-medium text-slate-900">Transfer Confirmed</div>
+                                            <div className="text-slate-500 mt-1">Applicant confirmed the GBP 350 transfer on the portal.</div>
+                                        </div>
+                                        <ConfirmationBadge confirmed={!!application.offerAcceptance.transfer_confirmed} />
+                                    </div>
+                                    <div className="p-5 bg-slate-50 grid gap-4 md:grid-cols-2">
+                                        <InfoRow label="Acceptance Started" value={application.offerAcceptance.startedAt ? new Date(application.offerAcceptance.startedAt).toLocaleString() : "-"} />
+                                        <InfoRow label="Acceptance Submitted" value={application.offerAcceptance.submittedAt ? new Date(application.offerAcceptance.submittedAt).toLocaleString() : "-"} />
+                                    </div>
                                 </div>
                             </section>
                         )}

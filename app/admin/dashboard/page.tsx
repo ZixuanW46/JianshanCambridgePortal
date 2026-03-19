@@ -17,7 +17,7 @@ export default function AdminDashboardPage() {
 
     useEffect(() => {
         if (!authLoading) {
-            if (!user) { router.push("/login"); return; }
+            if (!user) { router.replace("/"); return; }
             if (!isAdmin) { router.push("/dashboard"); return; }
         }
     }, [user, authLoading, isAdmin, router]);

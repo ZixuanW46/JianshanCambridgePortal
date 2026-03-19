@@ -26,9 +26,21 @@ export function StatusBadge({ status }: StatusBadgeProps) {
             color = "bg-green-500 hover:bg-green-600";
             label = status === 'decision_released' ? "Decision Released" : "Accepted";
             break;
+        case 'accepted_pending_payment':
+            color = "bg-amber-500 hover:bg-amber-600";
+            label = "Accepted - Pending Payment";
+            break;
+        case 'accepted_paid':
+            color = "bg-emerald-600 hover:bg-emerald-700";
+            label = "Accepted - Paid";
+            break;
+        case 'payment_received':
+            color = "bg-teal-600 hover:bg-teal-700";
+            label = "Payment Received";
+            break;
         case 'enrolled':
             color = "bg-emerald-600 hover:bg-emerald-700";
-            label = "Enrolled";
+            label = "Accepted - Pending Payment";
             break;
         case 'rejected':
             color = "bg-red-500 hover:bg-red-600";

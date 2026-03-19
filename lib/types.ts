@@ -1,7 +1,7 @@
 export interface Application {
     id: string;
     userId: string;
-    status: 'draft' | 'submitted' | 'under_review' | 'shortlisted' | 'round_2_submitted' | 'round_2_under_review' | 'accepted' | 'rejected' | 'waitlisted' | 'enrolled';
+    status: 'draft' | 'submitted' | 'under_review' | 'shortlisted' | 'round_2_submitted' | 'round_2_under_review' | 'accepted' | 'accepted_pending_payment' | 'accepted_paid' | 'payment_received' | 'rejected' | 'waitlisted' | 'enrolled';
     submittedAt?: string;
     createdAt?: string;
     lastUpdatedAt: string;
@@ -54,14 +54,19 @@ export interface Application {
         type_b_session_title?: string;
         type_b_session_thoughts?: string;
         video_url: string;
-        confirms_theme_preparation?: boolean;
-        confirms_ab_session_delivery?: boolean;
-        confirms_student_facing_role?: boolean;
         confirms_workload_readiness?: boolean;
         confirms_deposit_terms?: boolean;
         confirms_flight_costs?: boolean;
         confirms_visa_responsibility?: boolean;
         final_round_concerns?: string | null;
+    };
+    offerAcceptance?: {
+        full_name_on_passport?: string;
+        nationality?: string;
+        passport_number?: string;
+        transfer_confirmed?: boolean;
+        startedAt?: string;
+        submittedAt?: string;
     };
     // Admin-only data
     adminData?: {

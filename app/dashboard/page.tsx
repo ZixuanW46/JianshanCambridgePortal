@@ -1,19 +1,21 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Application } from "@/lib/types";
 import { dbService } from "@/lib/db-service";
 import { Button } from "@/components/ui/button";
-import { Check, Clock, FileText, Calendar, Mail, Loader2, ArrowRight, CreditCard, Download, Flag, PenTool, User, Eye, FilePen, X, MessagesSquare } from "lucide-react";
+import { Check, FileText, Calendar, Mail, Loader2, ArrowRight, Flag, User, Eye, FilePen, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import Image from "next/image";
-import { OfferLetterTemplate } from "@/components/offer-letter-template";
-import { generateOfferPdf } from "@/lib/generate-offer-pdf";
 import { SCHOLARSHIP_FAQ_URL } from "@/lib/constants";
+import {
+    formatOfferAcceptanceDeadline,
+    isAcceptedPaid,
+    isAcceptedPendingPayment,
+} from "@/lib/offer-acceptance";
 
 // --- Components ---
 
@@ -77,11 +79,11 @@ function ProgressTimeline({ app }: { app: Application }) {
     const { status, submittedAt, createdAt, decisionReleasedAt } = app;
 
     const isSubmitted = status !== 'draft';
-    const isInitialReview = ['under_review', 'shortlisted', 'round_2_submitted', 'round_2_under_review', 'accepted', 'rejected', 'waitlisted', 'enrolled'].includes(status);
-    const isRound2Invited = ['shortlisted', 'round_2_submitted', 'round_2_under_review', 'accepted', 'waitlisted', 'enrolled'].includes(status) || !!app.section6_round_2;
-    const isRound2Submitted = ['round_2_submitted', 'round_2_under_review', 'accepted', 'rejected', 'waitlisted', 'enrolled'].includes(status) && !!app.section6_round_2;
-    const isDecisionReleased = ['accepted', 'rejected', 'waitlisted', 'enrolled'].includes(status);
-    const isEnrolled = ['enrolled'].includes(status);
+    const isInitialReview = ['under_review', 'shortlisted', 'round_2_submitted', 'round_2_under_review', 'accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received', 'rejected', 'waitlisted', 'enrolled'].includes(status);
+    const isRound2Invited = ['shortlisted', 'round_2_submitted', 'round_2_under_review', 'accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received', 'waitlisted', 'enrolled'].includes(status) || !!app.section6_round_2;
+    const isRound2Submitted = ['round_2_submitted', 'round_2_under_review', 'accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received', 'rejected', 'waitlisted', 'enrolled'].includes(status) && !!app.section6_round_2;
+    const isDecisionReleased = ['accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received', 'rejected', 'waitlisted', 'enrolled'].includes(status);
+    const isOfferAccepted = isAcceptedPendingPayment(status) || isAcceptedPaid(status);
 
     const showRound2Steps = status !== 'rejected' || !!app.section6_round_2;
 
@@ -275,7 +277,7 @@ function ProgressTimeline({ app }: { app: Application }) {
                 {/* Icon Column */}
                 <div className="flex flex-col items-center gap-1 pt-1">
                     {isDecisionReleased ? (
-                        isEnrolled ? (
+                        isOfferAccepted ? (
                             <div className="size-8 rounded-full bg-primary flex items-center justify-center text-white z-10">
                                 <Check size={20} className="text-white" strokeWidth={3} />
                             </div>
@@ -289,11 +291,10 @@ function ProgressTimeline({ app }: { app: Application }) {
                             <Flag size={18} />
                         </div>
                     )}
-
-                    {isEnrolled && <div className="w-[2px] bg-primary h-full min-h-[40px]"></div>}
+                    {isOfferAccepted && <div className="w-[2px] bg-primary h-full min-h-[40px]"></div>}
                 </div>
                 {/* Text Column */}
-                <div className={cn("flex flex-col pt-1", isEnrolled ? "pb-8" : "pb-0")}>
+                <div className={cn("flex flex-col pt-1", isOfferAccepted ? "pb-8" : "pb-0")}>
                     <p className={cn(
                         "text-base font-bold leading-normal",
                         isDecisionReleased ? "text-foreground" : "text-muted-foreground"
@@ -308,19 +309,27 @@ function ProgressTimeline({ app }: { app: Application }) {
                 </div>
 
                 {/* --- Step 6: Offer Accepted --- */}
-                {isEnrolled && (
+                {isOfferAccepted && (
                     <>
                         <div className="flex flex-col items-center gap-1 pt-0">
-                            <div className="size-8 rounded-full bg-green-50 border-[3px] border-green-600 relative z-10 shadow-[0_0_15px_rgba(22,163,74,0.6)] flex items-center justify-center text-green-600">
-                                <Check size={20} className="text-green-600" strokeWidth={3} />
+                            <div className={cn(
+                                "size-8 rounded-full relative z-10 flex items-center justify-center shadow-[0_0_15px_rgba(22,163,74,0.45)]",
+                                isAcceptedPaid(status)
+                                    ? "bg-green-50 border-[3px] border-green-600 text-green-600"
+                                    : "bg-amber-50 border-[3px] border-amber-500 text-amber-600"
+                            )}>
+                                <Check size={20} className={cn(isAcceptedPaid(status) ? "text-green-600" : "text-amber-600")} strokeWidth={3} />
                             </div>
                         </div>
                         <div className="flex flex-col pb-0 pt-1">
-                            <p className="text-base font-bold leading-normal text-green-700">
-                                Offer Accepted
+                            <p className={cn(
+                                "text-base font-bold leading-normal",
+                                isAcceptedPaid(status) ? "text-green-700" : "text-amber-700"
+                            )}>
+                                {isAcceptedPaid(status) ? "Deposit Submitted" : "Offer Accepted"}
                             </p>
                             <p className="text-sm text-muted-foreground font-normal leading-normal">
-                                Completed
+                                {isAcceptedPaid(status) ? "Completed" : "Awaiting deposit and passport details"}
                             </p>
                         </div>
                     </>
@@ -383,31 +392,42 @@ function ApplicationDetails({ app }: { app: Application }) {
     );
 }
 
+function PendingPaymentReminder({ app }: { app: Application }) {
+    const deadline = formatOfferAcceptanceDeadline(app.decisionReleasedAt);
+
+    return (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+            <div className="flex items-start gap-3">
+                <AlertCircle className="mt-0.5 h-5 w-5 text-amber-700" />
+                <div className="flex-1">
+                    <h3 className="text-base font-bold text-amber-900">Complete your deposit and confirmation form</h3>
+                    <p className="mt-2 text-sm leading-6 text-amber-900/90">
+                        Your place is not secured yet. Please transfer the <strong>GBP 350 deposit</strong> and submit your passport details by <strong>{deadline}</strong>.
+                    </p>
+                    <div className="mt-4">
+                        <Button asChild className="bg-amber-700 text-white hover:bg-amber-800">
+                            <Link href="/acceptance/next-step">
+                                Complete Next Step
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function DashboardPage() {
     const { user, loading: authLoading, isAdmin } = useAuth();
     const router = useRouter();
     const [app, setApp] = useState<Application | null>(null);
     const [loading, setLoading] = useState(true);
-    const [downloading, setDownloading] = useState(false);
-    const offerLetterRef = useRef<HTMLDivElement>(null);
-
-    const handleDownloadPdf = async () => {
-        if (!offerLetterRef.current || !app) return;
-        setDownloading(true);
-        try {
-            const fullName = app.section1_personal?.full_name || "Applicant";
-            await generateOfferPdf(offerLetterRef.current, fullName);
-        } catch (err) {
-            console.error("PDF generation failed:", err);
-        } finally {
-            setDownloading(false);
-        }
-    };
 
     useEffect(() => {
         if (!authLoading) {
             if (!user) {
-                router.push("/login");
+                router.replace("/");
             } else if (isAdmin) {
                 router.replace("/admin/dashboard");
             }
@@ -419,7 +439,7 @@ export default function DashboardPage() {
             if (!user) return;
             const uid = user.uid;
             try {
-                let myApp = await dbService.getMyApplication(uid);
+                const myApp = await dbService.getMyApplication(uid);
                 setApp(myApp as Application);
 
                 if (!myApp) {
@@ -445,20 +465,16 @@ export default function DashboardPage() {
 
     if (!user || !app) return null;
 
+    const isPendingPayment = isAcceptedPendingPayment(app.status);
+    const isPaid = isAcceptedPaid(app.status);
+
     return (
         <div className="container max-w-7xl mx-auto px-4 py-8 md:py-12">
-            {/* Hidden Offer Letter Template for PDF generation */}
-            {app && (app.status === 'accepted' || app.status === 'enrolled') && (
-                <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-                    <OfferLetterTemplate ref={offerLetterRef} application={app} />
-                </div>
-            )}
-
             {/* Header Area */}
             <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="flex flex-col gap-2">
                     <h1 className="text-3xl md:text-4xl font-black text-foreground">Application Status</h1>
-                    <p className="text-muted-foreground text-lg">Track your Cambridge Tutor application progress.</p>
+                    <p className="text-muted-foreground text-lg">Track your Jianshan Scholarship application progress.</p>
                 </div>
             </div>
 
@@ -470,13 +486,15 @@ export default function DashboardPage() {
                         {/* Dynamic Backgrounds based on status */}
                         <div className={cn(
                             "absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl transition-all duration-700",
-                            (app.status === 'enrolled') ? "bg-green-500/10" : "bg-accent/10"
+                            isPaid ? "bg-green-500/10" : isPendingPayment ? "bg-amber-500/10" : "bg-accent/10"
                         )} />
 
                         <div className="relative z-10 flex flex-col gap-4">
                             <div className="flex items-center gap-3">
-                                {app.status === 'enrolled' ? (
-                                    <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs font-bold uppercase">Offer Accepted</span>
+                                {isPaid ? (
+                                    <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold uppercase">Offer Secured</span>
+                                ) : isPendingPayment ? (
+                                    <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold uppercase">Action Required</span>
                                 ) : ['accepted', 'rejected', 'waitlisted'].includes(app.status) ? (
                                     <span className="px-3 py-1 rounded-full bg-accent text-primary text-xs font-bold uppercase">Update Received</span>
                                 ) : (
@@ -486,16 +504,24 @@ export default function DashboardPage() {
                             </div>
 
                             {/* MAIN STATUS TEXT */}
-                            {app.status === 'enrolled' ? (
+                            {isPaid ? (
                                 <>
-                                    <h2 className="text-2xl md:text-3xl font-bold leading-tight">Enrollment Confirmed! 🎉</h2>
+                                    <h2 className="text-2xl md:text-3xl font-bold leading-tight">Deposit Submitted Successfully 🎉</h2>
                                     <p className="text-muted-foreground leading-relaxed">
-                                        Congratulations! You have accepted our offer. We are extremely excited to have you join our team this summer.
+                                        Thank you. We have received your confirmation details and transfer confirmation. Your place is marked as secured pending our final administrative review.
                                     </p>
-                                    <div className="mt-4 pt-4 border-t flex flex-col sm:flex-row gap-4">
-                                        <Button variant="outline" size="lg" onClick={handleDownloadPdf} disabled={downloading}>
-                                            {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                            Download Offer Letter <Download className="ml-2 h-5 w-5" />
+                                </>
+                            ) : isPendingPayment ? (
+                                <>
+                                    <h2 className="text-2xl md:text-3xl font-bold leading-tight">Offer Accepted, One Final Step Left</h2>
+                                    <p className="text-muted-foreground leading-relaxed">
+                                        You have started the acceptance process, but your place is not secured yet. Please complete the deposit transfer and passport confirmation form before the deadline.
+                                    </p>
+                                    <div className="mt-4 pt-4 border-t flex gap-4">
+                                        <Button size="lg" asChild>
+                                            <Link href="/acceptance/next-step">
+                                                Complete Deposit Step <ArrowRight className="ml-2 h-5 w-5" strokeWidth={3} />
+                                            </Link>
                                         </Button>
                                     </div>
                                 </>
@@ -503,7 +529,7 @@ export default function DashboardPage() {
                                 <>
                                     <h2 className="text-2xl md:text-3xl font-bold leading-tight">Application Result Released 🔔</h2>
                                     <p className="text-muted-foreground leading-relaxed">
-                                        The admissions team has finished reviewing your application. Please click below to view your decision.
+                                        The scholarship committee has finished reviewing your application. Please click below to view your decision and any required next steps.
                                     </p>
                                     <div className="mt-4 pt-4 border-t flex gap-4">
                                         <Button size="lg" asChild>
@@ -567,6 +593,7 @@ export default function DashboardPage() {
 
                 {/* Right Sidebar */}
                 <div className="lg:col-span-4 flex flex-col gap-6">
+                    {isPendingPayment && <PendingPaymentReminder app={app} />}
                     <ApplicationDetails app={app} />
 
                     {/* Contact Card */}

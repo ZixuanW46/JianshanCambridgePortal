@@ -12,7 +12,7 @@ export function DashboardStats({ applications }: DashboardStatsProps) {
         app.status === 'submitted' || app.status === 'under_review'
     ).length;
     const accepted = applications.filter(app =>
-        app.status === 'accepted' || app.status === 'enrolled'
+        app.status === 'accepted' || app.status === 'accepted_pending_payment' || app.status === 'accepted_paid' || app.status === 'payment_received' || app.status === 'enrolled'
     ).length;
 
     const stats = [

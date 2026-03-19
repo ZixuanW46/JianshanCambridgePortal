@@ -16,17 +16,19 @@ import {
     DropdownMenuSeparator,
     DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Eye, Loader2, CheckCircle, RefreshCcw, Play, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Eye, Loader2, CheckCircle, RefreshCcw, Play, Trash2, Banknote, Download } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
 import { dbService } from "@/lib/db-service";
 import { Application } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
+import { formatStatusLabel, getNextStatus, getPreviousStatus, InternalDecision } from "@/lib/admin-workflow";
+import { downloadApplicationsExcel } from "@/lib/admin-application-export";
 
 interface AdminApplicationTableProps {
     applications: Application[];
 }
 
-const allDecisionOptions = [
+const allDecisionOptions: Array<{ value: InternalDecision; label: string; color: string }> = [
     { value: 'shortlisted', label: 'Shortlisted', color: 'bg-purple-100 text-purple-700 hover:bg-purple-200' },
     { value: 'accepted', label: 'Accepted', color: 'bg-green-100 text-green-700 hover:bg-green-200' },
     { value: 'rejected', label: 'Rejected', color: 'bg-red-100 text-red-700 hover:bg-red-200' },
@@ -68,6 +70,7 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [updatingParams, setUpdatingParams] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [expandedActionRowId, setExpandedActionRowId] = useState<string | null>(null);
     const itemsPerPage = 10;
 
     const safeApps = localApps || [];
@@ -116,18 +119,18 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
         setSortConfig(current => ({ key, direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc' }));
     };
 
-    const handleDecisionUpdate = async (userId: string, decision: string | null) => {
+    const handleDecisionUpdate = async (userId: string, decision: InternalDecision | null) => {
         const previousApps = [...localApps];
         setLocalApps(current => current.map(app => {
             if (app.id === userId) {
-                return { ...app, adminData: { ...app.adminData, internalDecision: decision as any } };
+                return { ...app, adminData: { ...app.adminData, internalDecision: decision } };
             }
             return app;
         }));
         setUpdatingParams(userId);
         try {
-            if (decision === null || ['shortlisted', 'accepted', 'rejected', 'waitlisted'].includes(decision!)) {
-                await dbService.setInternalDecision(userId, decision as any);
+            if (decision === null || ['shortlisted', 'accepted', 'rejected', 'waitlisted'].includes(decision)) {
+                await dbService.setInternalDecision(userId, decision);
                 router.refresh();
             }
         } catch (error) {
@@ -162,8 +165,29 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
 
     const [releaseStage, setReleaseStage] = useState<'idle' | 'confirming' | 'releasing' | 'success' | 'error'>('idle');
     const [releaseError, setReleaseError] = useState<string>("");
+    const [isExporting, setIsExporting] = useState(false);
 
     const handleBatchReleaseClick = () => { if (selectedIds.size === 0) return; setReleaseStage('confirming'); };
+
+    const handleExport = async () => {
+        const selectedApps = filteredApps.filter((app) => app.id && selectedIds.has(app.id));
+        const appsToExport = selectedApps.length > 0 ? selectedApps : filteredApps;
+
+        if (appsToExport.length === 0) {
+            alert("No applications available to export.");
+            return;
+        }
+
+        setIsExporting(true);
+        try {
+            downloadApplicationsExcel(appsToExport, { selectedOnly: selectedApps.length > 0 });
+        } catch (error) {
+            console.error("Failed to export applications:", error);
+            alert("Failed to export applications.");
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     const confirmRelease = async () => {
         setReleaseStage('releasing');
@@ -190,16 +214,35 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
         return sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-blue-600" /> : <ArrowDown className="w-3 h-3 text-blue-600" />;
     };
 
-    const [confirmAction, setConfirmAction] = useState<{ type: 'reset' | 'progress' | 'delete', userId: string } | null>(null);
+    const [confirmAction, setConfirmAction] = useState<{ type: 'reset' | 'advance' | 'back' | 'delete' | 'confirm_payment', userId: string } | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
+
+    const toggleExpandedActions = (userId: string) => {
+        setExpandedActionRowId(current => current === userId ? null : userId);
+    };
+
+    const getActionTargetStatus = (action: NonNullable<typeof confirmAction>) => {
+        const app = localApps.find(item => item.id === action.userId);
+        if (!app) return null;
+        if (action.type === 'advance') return getNextStatus(app.status);
+        if (action.type === 'back') return getPreviousStatus(app.status);
+        if (action.type === 'confirm_payment') return 'payment_received';
+        if (action.type === 'reset') return 'draft';
+        return null;
+    };
 
     const confirmActionHandler = async () => {
         if (!confirmAction) return;
         setActionLoading(true);
         try {
-            if (confirmAction.type === 'progress') await dbService.progressApplication(confirmAction.userId);
+            if (confirmAction.type === 'advance' || confirmAction.type === 'back') {
+                const targetStatus = getActionTargetStatus(confirmAction);
+                if (!targetStatus) throw new Error("No target status available.");
+                await dbService.moveApplicationStatus(confirmAction.userId, targetStatus);
+            }
             else if (confirmAction.type === 'reset') await dbService.resetApplication(confirmAction.userId);
             else if (confirmAction.type === 'delete') await dbService.deleteApplication(confirmAction.userId);
+            else if (confirmAction.type === 'confirm_payment') await dbService.confirmPaymentReceived(confirmAction.userId);
             if (confirmAction.type === 'delete') {
                 setLocalApps(prev => prev.filter(a => a.id !== confirmAction.userId));
             } else {
@@ -229,6 +272,14 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    <button
+                        className="flex items-center gap-2 px-6 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-lg transition-colors shadow-sm hover:shadow-md text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={handleExport}
+                        disabled={filteredApps.length === 0 || isExporting}
+                    >
+                        {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                        <span>Export to Excel</span>
+                    </button>
                     <button
                         className="flex items-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors shadow-sm hover:shadow-md text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleBatchReleaseClick}
@@ -261,7 +312,7 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                                     <DropdownMenuContent align="start">
                                         <DropdownMenuLabel>Filter Status</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        {['all', 'draft', 'submitted', 'under_review', 'shortlisted', 'round_2_submitted', 'round_2_under_review', 'accepted', 'enrolled', 'rejected', 'waitlisted'].map(s => (
+                                        {['all', 'draft', 'submitted', 'under_review', 'shortlisted', 'round_2_submitted', 'round_2_under_review', 'accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received', 'enrolled', 'rejected', 'waitlisted'].map(s => (
                                             <DropdownMenuCheckboxItem key={s} checked={statusFilter === s} onCheckedChange={() => setStatusFilter(s)}>
                                                 {s === 'all' ? 'All Statuses' : s.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                                             </DropdownMenuCheckboxItem>
@@ -354,11 +405,45 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                                         <span className="text-sm text-slate-700">{new Date(app.lastUpdatedAt || "").toLocaleDateString()}</span>
                                     </TableCell>
                                     <TableCell className="px-2 py-4">
-                                        <div className="flex justify-end gap-1">
-                                            <Link href={`/admin/application?id=${app.id}`}><Button variant="ghost" size="icon" className="h-8 w-8 text-slate-700 hover:text-slate-900 hover:bg-slate-100" title="View"><Eye className="h-4 w-4" /></Button></Link>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Reset to Draft" onClick={() => setConfirmAction({ type: 'reset', userId: app.id! })}><RefreshCcw className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50" title="Progress to Review" disabled={['accepted', 'enrolled', 'under_review', 'rejected', 'waitlisted', 'shortlisted', 'round_2_submitted', 'round_2_under_review'].includes(app.status)} onClick={() => setConfirmAction({ type: 'progress', userId: app.id! })}><Play className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" title="Delete" onClick={() => setConfirmAction({ type: 'delete', userId: app.id! })}><Trash2 className="h-4 w-4" /></Button>
+                                        <div className="flex flex-col items-end gap-2">
+                                            <div className="flex justify-end gap-1">
+                                                <Link href={`/admin/application?id=${app.id}`}>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-700 hover:text-slate-900 hover:bg-slate-100" title="View">
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                    title="Confirm payment received"
+                                                    disabled={app.status !== 'accepted_paid'}
+                                                    onClick={() => setConfirmAction({ type: 'confirm_payment', userId: app.id! })}
+                                                >
+                                                    <Banknote className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 gap-1.5 px-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                                    title={expandedActionRowId === app.id ? "Hide more actions" : "Show more actions"}
+                                                    onClick={() => toggleExpandedActions(app.id!)}
+                                                >
+                                                    <span className="text-xs font-medium">More</span>
+                                                    {expandedActionRowId === app.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                                </Button>
+                                            </div>
+
+                                            {expandedActionRowId === app.id && (
+                                                <div className="flex flex-wrap justify-end gap-1 rounded-lg border border-slate-200 bg-slate-50 p-2">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Reset to Draft" onClick={() => setConfirmAction({ type: 'reset', userId: app.id! })}><RefreshCcw className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50" title={getNextStatus(app.status) ? `Advance to ${formatStatusLabel(getNextStatus(app.status)!)}`
+                                                        : "No next step"} disabled={!getNextStatus(app.status)} onClick={() => setConfirmAction({ type: 'advance', userId: app.id! })}><Play className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50" title={getPreviousStatus(app.status) ? `Return to ${formatStatusLabel(getPreviousStatus(app.status)!)}`
+                                                        : "No previous step"} disabled={!getPreviousStatus(app.status)} onClick={() => setConfirmAction({ type: 'back', userId: app.id! })}><ArrowDown className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" title="Delete" onClick={() => setConfirmAction({ type: 'delete', userId: app.id! })}><Trash2 className="h-4 w-4" /></Button>
+                                                </div>
+                                            )}
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -390,15 +475,23 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                             </div>
                         ) : (
                             <>
-                                <h3 className="text-lg font-bold text-slate-900 mb-2 capitalize">{confirmAction.type} Application?</h3>
+                                <h3 className="text-lg font-bold text-slate-900 mb-2 capitalize">{confirmAction.type.replace('_', ' ')} Application?</h3>
                                 <p className="text-slate-600 mb-6 text-sm">
                                     {confirmAction.type === 'reset' && "This will revert the application status to 'Draft'."}
-                                    {confirmAction.type === 'progress' && "This will move the application status to 'Under Review'."}
+                                    {confirmAction.type === 'advance' && (() => {
+                                        const target = getActionTargetStatus(confirmAction);
+                                        return target ? `This will move the application to '${formatStatusLabel(target)}'.` : "No next step is available.";
+                                    })()}
+                                    {confirmAction.type === 'back' && (() => {
+                                        const target = getActionTargetStatus(confirmAction);
+                                        return target ? `This will return the application to '${formatStatusLabel(target)}'.` : "No previous step is available.";
+                                    })()}
+                                    {confirmAction.type === 'confirm_payment' && "This will mark the applicant as payment received."}
                                     {confirmAction.type === 'delete' && "Are you sure? This action cannot be undone."}
                                 </p>
                                 <div className="flex justify-end gap-3">
                                     <button onClick={() => setConfirmAction(null)} className="px-4 py-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 font-medium text-sm">Cancel</button>
-                                    <button onClick={confirmActionHandler} className={`px-4 py-2 text-white rounded-lg font-medium shadow-sm text-sm ${confirmAction.type === 'delete' ? 'bg-red-600 hover:bg-red-700' : confirmAction.type === 'reset' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'}`}>Confirm</button>
+                                    <button onClick={confirmActionHandler} className={`px-4 py-2 text-white rounded-lg font-medium shadow-sm text-sm ${confirmAction.type === 'delete' ? 'bg-red-600 hover:bg-red-700' : confirmAction.type === 'reset' ? 'bg-blue-600 hover:bg-blue-700' : confirmAction.type === 'confirm_payment' ? 'bg-emerald-600 hover:bg-emerald-700' : confirmAction.type === 'back' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-green-600 hover:bg-green-700'}`}>Confirm</button>
                                 </div>
                             </>
                         )}
