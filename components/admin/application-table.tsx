@@ -25,12 +25,22 @@ import { formatStatusLabel, getNextStatus, getPreviousStatus, InternalDecision }
 import { downloadApplicationsExcel } from "@/lib/admin-application-export";
 import { normalizeApplicationStatus } from "@/lib/application-status";
 import { ADMIN_STATUS_FILTER_OPTIONS, type AdminStatusFilter } from "@/lib/admin-dashboard";
+import { formatNationalityList } from "@/lib/application-form";
 
 interface AdminApplicationTableProps {
     applications: Application[];
     statusFilter?: AdminStatusFilter;
     onStatusFilterChange?: (status: AdminStatusFilter) => void;
 }
+
+type ToggleableColumnId =
+    | "internalDecision"
+    | "gender"
+    | "yearOfStudy"
+    | "subject"
+    | "nationality"
+    | "submitted"
+    | "lastUpdated";
 
 const allDecisionOptions: Array<{ value: InternalDecision; label: string; color: string }> = [
     { value: 'shortlisted', label: 'Shortlisted', color: 'bg-purple-100 text-purple-700 hover:bg-purple-200' },
@@ -82,6 +92,60 @@ const getInitials = (name: string) => {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 
+const getDisplayGender = (app: Application) => {
+    const gender = app.section1_personal?.gender;
+    if (!gender) return "-";
+    if (gender === "Other") {
+        return app.section1_personal?.gender_other?.trim() || "Other";
+    }
+    return gender;
+};
+
+const getDisplaySubject = (app: Application) => {
+    const subject = app.section1_personal?.subject;
+    if (!subject) return "-";
+    if (subject === "Other") {
+        return app.section1_personal?.subject_other?.trim() || "Other";
+    }
+    return subject;
+};
+
+const getDisplayYearOfStudy = (app: Application) => {
+    const yearOfStudy = app.section1_personal?.year_of_study;
+    if (!yearOfStudy) return "-";
+    if (yearOfStudy === "Other") {
+        return app.section1_personal?.year_of_study_other?.trim() || "Other";
+    }
+    return yearOfStudy;
+};
+
+const getDisplayNationality = (app: Application) => {
+    return formatNationalityList(app.section1_personal?.nationality) || "-";
+};
+
+const getUniqueColumnFilterOptions = (
+    apps: Application[],
+    getter: (app: Application) => string,
+) => {
+    const values = new Set<string>();
+
+    apps.forEach((app) => {
+        values.add(getter(app) || "-");
+    });
+
+    return ["all", ...Array.from(values).sort((a, b) => a.localeCompare(b))];
+};
+
+const DEFAULT_VISIBLE_COLUMNS: ToggleableColumnId[] = [
+    "internalDecision",
+    "gender",
+    "yearOfStudy",
+    "subject",
+    "nationality",
+    "submitted",
+    "lastUpdated",
+];
+
 export function AdminApplicationTable({
     applications,
     statusFilter: controlledStatusFilter,
@@ -95,11 +159,15 @@ export function AdminApplicationTable({
     const [search, setSearch] = useState("");
     const [uncontrolledStatusFilter, setUncontrolledStatusFilter] = useState<AdminStatusFilter>("all");
     const [decisionFilter, setDecisionFilter] = useState("all");
+    const [genderFilter, setGenderFilter] = useState("all");
+    const [yearOfStudyFilter, setYearOfStudyFilter] = useState("all");
+    const [subjectFilter, setSubjectFilter] = useState("all");
+    const [visibleColumnIds, setVisibleColumnIds] = useState<ToggleableColumnId[]>(DEFAULT_VISIBLE_COLUMNS);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [updatingParams, setUpdatingParams] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [expandedActionRowId, setExpandedActionRowId] = useState<string | null>(null);
-    const itemsPerPage = 10;
+    const itemsPerPage = 50;
     const statusFilter = controlledStatusFilter ?? uncontrolledStatusFilter;
 
     const handleStatusFilterChange = (nextStatus: AdminStatusFilter) => {
@@ -111,21 +179,27 @@ export function AdminApplicationTable({
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [search, decisionFilter, statusFilter]);
+    }, [search, decisionFilter, statusFilter, genderFilter, yearOfStudyFilter, subjectFilter]);
 
     const safeApps = localApps || [];
+    const genderFilterOptions = getUniqueColumnFilterOptions(safeApps, getDisplayGender);
+    const yearOfStudyFilterOptions = getUniqueColumnFilterOptions(safeApps, getDisplayYearOfStudy);
+    const subjectFilterOptions = getUniqueColumnFilterOptions(safeApps, getDisplaySubject);
+
     const filteredApps = safeApps.filter(app => {
         const searchTerm = search.toLowerCase();
         const fullName = (app.section1_personal?.full_name || "").toLowerCase();
         const email = (app.section1_personal?.personal_email || app.section1_personal?.cambridge_email || "").toLowerCase();
-        const normalizedStatus = normalizeApplicationStatus(app.status) || app.status;
         const searchMatch = fullName.includes(searchTerm) || email.includes(searchTerm);
         const statusMatch = matchesStatusFilter(app.status, statusFilter);
+        const genderMatch = genderFilter === "all" || getDisplayGender(app) === genderFilter;
+        const yearOfStudyMatch = yearOfStudyFilter === "all" || getDisplayYearOfStudy(app) === yearOfStudyFilter;
+        const subjectMatch = subjectFilter === "all" || getDisplaySubject(app) === subjectFilter;
         let decisionMatch = true;
         if (decisionFilter === "all") decisionMatch = true;
         else if (decisionFilter === "undecided") decisionMatch = !app.adminData?.internalDecision;
         else decisionMatch = app.adminData?.internalDecision === decisionFilter;
-        return searchMatch && statusMatch && decisionMatch;
+        return searchMatch && statusMatch && decisionMatch && genderMatch && yearOfStudyMatch && subjectMatch;
     });
 
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'lastUpdated', direction: 'desc' });
@@ -158,6 +232,14 @@ export function AdminApplicationTable({
     const handlePageChange = (page: number) => { if (page >= 1 && page <= totalPages) setCurrentPage(page); };
     const handleSort = (key: string) => {
         setSortConfig(current => ({ key, direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc' }));
+    };
+
+    const toggleColumnVisibility = (columnId: ToggleableColumnId) => {
+        setVisibleColumnIds((current) => (
+            current.includes(columnId)
+                ? current.filter((id) => id !== columnId)
+                : [...current, columnId]
+        ));
     };
 
     const handleDecisionUpdate = async (userId: string, decision: InternalDecision | null) => {
@@ -256,6 +338,151 @@ export function AdminApplicationTable({
         return sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3 text-blue-600" /> : <ArrowDown className="w-3 h-3 text-blue-600" />;
     };
 
+    const renderSingleSelectFilter = (
+        label: string,
+        value: string,
+        onChange: (nextValue: string) => void,
+        options: string[],
+        menuLabel: string,
+    ) => (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-1 text-slate-500 hover:text-slate-700 text-xs uppercase tracking-wider group font-medium">
+                    {label} <Filter className="ml-1 h-3 w-3" />
+                </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+                <DropdownMenuLabel>{menuLabel}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {options.map((option) => (
+                    <DropdownMenuCheckboxItem
+                        key={option}
+                        checked={value === option}
+                        onCheckedChange={() => onChange(option)}
+                    >
+                        {option === "all" ? "All" : option}
+                    </DropdownMenuCheckboxItem>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+
+    const middleColumns = [
+        {
+            id: "internalDecision" as const,
+            label: "Internal Decision",
+            minWidth: 190,
+            visible: visibleColumnIds.includes("internalDecision"),
+            header: renderSingleSelectFilter(
+                "INTERNAL DECISION",
+                decisionFilter,
+                setDecisionFilter,
+                ['all', 'undecided', 'shortlisted', 'accepted', 'rejected', 'waitlisted'],
+                "Filter Decision",
+            ),
+            cell: (app: Application) => (
+                app.status === 'draft' ? (
+                    <span className="text-slate-400">-</span>
+                ) : ['submitted', 'under_review', 'shortlisted', 'round_2_under_review', 'waitlisted'].includes(normalizeApplicationStatus(app.status) || app.status) ? (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs transition-colors font-medium outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 ${getDecisionColor(app.adminData?.internalDecision)} ${updatingParams === app.id ? 'opacity-50 cursor-wait' : ''}`} disabled={updatingParams === app.id}>
+                                {allDecisionOptions.find(opt => opt.value === app.adminData?.internalDecision)?.label || 'Pending'}
+                                {updatingParams === app.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <ChevronDown className="w-3 h-3" />}
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                            <DropdownMenuItem onClick={() => handleDecisionUpdate(app.id!, null)} className="cursor-pointer">
+                                <span className="inline-block w-2 h-2 rounded-full mr-2 bg-slate-300"></span> Undecided
+                            </DropdownMenuItem>
+                            {getDecisionOptions(app.status).map(option => (
+                                <DropdownMenuItem key={option.value} onClick={() => handleDecisionUpdate(app.id!, option.value)} className="cursor-pointer">
+                                    <span className={`inline-block w-2 h-2 rounded-full mr-2 ${option.color.split(' ')[0]}`}></span> {option.label}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                ) : (
+                    <button className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium opacity-50 cursor-not-allowed ${getDecisionColor(app.adminData?.internalDecision)}`} disabled>
+                        {allDecisionOptions.find(opt => opt.value === app.adminData?.internalDecision)?.label || 'Pending'}
+                    </button>
+                )
+            ),
+        },
+        {
+            id: "gender" as const,
+            label: "Gender",
+            minWidth: 140,
+            visible: visibleColumnIds.includes("gender"),
+            header: renderSingleSelectFilter("GENDER", genderFilter, setGenderFilter, genderFilterOptions, "Filter Gender"),
+            cell: (app: Application) => <span className="text-sm text-slate-700">{getDisplayGender(app)}</span>,
+        },
+        {
+            id: "yearOfStudy" as const,
+            label: "Year of Study",
+            minWidth: 170,
+            visible: visibleColumnIds.includes("yearOfStudy"),
+            header: renderSingleSelectFilter("YEAR OF STUDY", yearOfStudyFilter, setYearOfStudyFilter, yearOfStudyFilterOptions, "Filter Year of Study"),
+            cell: (app: Application) => <span className="text-sm text-slate-700">{getDisplayYearOfStudy(app)}</span>,
+        },
+        {
+            id: "subject" as const,
+            label: "Subject / Programme",
+            minWidth: 220,
+            visible: visibleColumnIds.includes("subject"),
+            header: renderSingleSelectFilter("SUBJECT / PROGRAMME", subjectFilter, setSubjectFilter, subjectFilterOptions, "Filter Subject / Programme"),
+            cell: (app: Application) => (
+                <span className="block max-w-[200px] truncate text-sm text-slate-700" title={getDisplaySubject(app)}>
+                    {getDisplaySubject(app)}
+                </span>
+            ),
+        },
+        {
+            id: "nationality" as const,
+            label: "Nationality",
+            minWidth: 220,
+            visible: visibleColumnIds.includes("nationality"),
+            header: <span className="text-slate-500 text-xs uppercase tracking-wider font-medium">Nationality</span>,
+            cell: (app: Application) => (
+                <span className="block max-w-[200px] truncate text-sm text-slate-700" title={getDisplayNationality(app)}>
+                    {getDisplayNationality(app)}
+                </span>
+            ),
+        },
+        {
+            id: "submitted" as const,
+            label: "Submitted",
+            minWidth: 150,
+            visible: visibleColumnIds.includes("submitted"),
+            header: (
+                <button className="flex items-center gap-1 text-slate-500 hover:text-slate-700 text-xs uppercase tracking-wider group font-medium" onClick={() => handleSort('submitted')}>
+                    SUBMITTED <span className="w-3 h-3 flex items-center justify-center"><SortIcon column="submitted" /></span>
+                </button>
+            ),
+            cell: (app: Application) => (
+                <span className="text-sm text-slate-700">{app.timeline?.submittedAt ? new Date(app.timeline.submittedAt).toLocaleDateString() : "-"}</span>
+            ),
+        },
+        {
+            id: "lastUpdated" as const,
+            label: "Last Updated",
+            minWidth: 160,
+            visible: visibleColumnIds.includes("lastUpdated"),
+            header: (
+                <button className="flex items-center gap-1 text-slate-500 hover:text-slate-700 text-xs uppercase tracking-wider group font-medium" onClick={() => handleSort('lastUpdated')}>
+                    LAST UPDATED <span className="w-3 h-3 flex items-center justify-center"><SortIcon column="lastUpdated" /></span>
+                </button>
+            ),
+            cell: (app: Application) => (
+                <span className="text-sm text-slate-700">{new Date(app.lastUpdatedAt || "").toLocaleDateString()}</span>
+            ),
+        },
+    ];
+
+    const visibleMiddleColumns = middleColumns.filter((column) => column.visible);
+    const tableMinWidth = 72 + 280 + 160 + 170 + visibleMiddleColumns.reduce((sum, column) => sum + column.minWidth, 0);
+    const emptyStateColSpan = 4 + visibleMiddleColumns.length;
+
     const [confirmAction, setConfirmAction] = useState<{ type: 'reset' | 'advance' | 'back' | 'delete' | 'confirm_payment', userId: string } | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
 
@@ -303,7 +530,7 @@ export function AdminApplicationTable({
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             {/* Toolbar */}
             <div className="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white">
-                <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="flex flex-col gap-3 w-full sm:w-auto sm:flex-row sm:items-center">
                     <div className="relative w-full sm:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input
@@ -312,6 +539,27 @@ export function AdminApplicationTable({
                             className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                         />
                     </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-lg transition-colors shadow-sm text-sm">
+                                Columns
+                                <ChevronDown className="h-4 w-4" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                            <DropdownMenuLabel>Show Columns</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {middleColumns.map((column) => (
+                                <DropdownMenuCheckboxItem
+                                    key={column.id}
+                                    checked={visibleColumnIds.includes(column.id)}
+                                    onCheckedChange={() => toggleColumnVisibility(column.id)}
+                                >
+                                    {column.label}
+                                </DropdownMenuCheckboxItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
@@ -335,18 +583,18 @@ export function AdminApplicationTable({
 
             {/* Table */}
             <div className="overflow-x-auto">
-                <Table>
+                <Table style={{ minWidth: `${tableMinWidth}px` }}>
                     <TableHeader>
                         <TableRow className="border-b border-slate-200 hover:bg-transparent">
-                            <TableHead className="w-12 px-6 py-3 text-left">
+                            <TableHead className="sticky left-0 z-30 w-12 bg-white px-6 py-3 text-left shadow-[6px_0_12px_-10px_rgba(15,23,42,0.18)]">
                                 <Checkbox checked={isAllSelected} onCheckedChange={toggleSelectAll} disabled={eligibleApps.length === 0} className="border-slate-300 rounded w-4 h-4" />
                             </TableHead>
-                            <TableHead className="px-6 py-3">
+                            <TableHead className="sticky left-[72px] z-30 min-w-[280px] bg-white px-6 py-3 shadow-[6px_0_12px_-10px_rgba(15,23,42,0.18)]">
                                 <button className="flex items-center gap-1 text-slate-500 hover:text-slate-700 text-xs uppercase tracking-wider group font-medium" onClick={() => handleSort('name')}>
                                     APPLICANT <span className="w-3 h-3 flex items-center justify-center"><SortIcon column="name" /></span>
                                 </button>
                             </TableHead>
-                            <TableHead className="px-6 py-3">
+                            <TableHead className="sticky left-[352px] z-30 min-w-[160px] bg-white px-6 py-3 shadow-[6px_0_12px_-10px_rgba(15,23,42,0.18)]">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <button className="flex items-center gap-1 text-slate-500 hover:text-slate-700 text-xs uppercase tracking-wider group font-medium">STATUS <Filter className="ml-1 h-3 w-3" /></button>
@@ -362,43 +610,24 @@ export function AdminApplicationTable({
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableHead>
-                            <TableHead className="px-6 py-3">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <button className="flex items-center gap-1 text-slate-500 hover:text-slate-700 text-xs uppercase tracking-wider group font-medium">INTERNAL DECISION <Filter className="ml-1 h-3 w-3" /></button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start">
-                                        <DropdownMenuLabel>Filter Decision</DropdownMenuLabel>
-                                        <DropdownMenuSeparator />
-                                        {[{ v: 'all', l: 'All' }, { v: 'undecided', l: 'Undecided' }, { v: 'shortlisted', l: 'Shortlisted' }, { v: 'accepted', l: 'Accepted' }, { v: 'rejected', l: 'Rejected' }, { v: 'waitlisted', l: 'Waitlisted' }].map(d => (
-                                            <DropdownMenuCheckboxItem key={d.v} checked={decisionFilter === d.v} onCheckedChange={() => setDecisionFilter(d.v)}>{d.l}</DropdownMenuCheckboxItem>
-                                        ))}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableHead>
-                            <TableHead className="px-6 py-3">
-                                <button className="flex items-center gap-1 text-slate-500 hover:text-slate-700 text-xs uppercase tracking-wider group font-medium" onClick={() => handleSort('submitted')}>
-                                    SUBMITTED <span className="w-3 h-3 flex items-center justify-center"><SortIcon column="submitted" /></span>
-                                </button>
-                            </TableHead>
-                            <TableHead className="px-6 py-3">
-                                <button className="flex items-center gap-1 text-slate-500 hover:text-slate-700 text-xs uppercase tracking-wider group font-medium" onClick={() => handleSort('lastUpdated')}>
-                                    LAST UPDATED <span className="w-3 h-3 flex items-center justify-center"><SortIcon column="lastUpdated" /></span>
-                                </button>
-                            </TableHead>
-                            <TableHead className="px-6 py-3 text-center text-slate-500 text-xs uppercase tracking-wider font-medium">Actions</TableHead>
+                            {visibleMiddleColumns.map((column) => (
+                                <TableHead key={column.id} className="px-6 py-3" style={{ minWidth: `${column.minWidth}px` }}>
+                                    {column.header}
+                                </TableHead>
+                            ))}
+                            <TableHead className="sticky right-0 z-30 min-w-[170px] bg-white px-4 py-3 text-center text-slate-500 text-xs uppercase tracking-wider font-medium shadow-[-6px_0_12px_-10px_rgba(15,23,42,0.18)]">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {sortedApps.length === 0 ? (
-                            <TableRow><TableCell colSpan={7} className="h-24 text-center">No results found.</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={emptyStateColSpan} className="h-24 text-center">No results found.</TableCell></TableRow>
                         ) : (
                             paginatedApps.map((app) => (
                                 <TableRow key={app.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                                    <TableCell className="px-6 py-4">
+                                    <TableCell className="sticky left-0 z-20 bg-white px-6 py-4 shadow-[6px_0_12px_-10px_rgba(15,23,42,0.14)]">
                                         <Checkbox checked={selectedIds.has(app.id!)} onCheckedChange={() => toggleSelectRow(app.id!)} disabled={!isEligibleForRelease(app)} className="border-slate-300 rounded w-4 h-4" />
                                     </TableCell>
-                                    <TableCell className="px-6 py-4">
+                                    <TableCell className="sticky left-[72px] z-20 min-w-[280px] bg-white px-6 py-4 shadow-[6px_0_12px_-10px_rgba(15,23,42,0.14)]">
                                         <div className="flex items-center gap-3">
                                             <div className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 font-semibold text-xs border border-slate-200">
                                                 {getInitials(app.section1_personal?.full_name || "No Name")}
@@ -411,42 +640,13 @@ export function AdminApplicationTable({
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="px-6 py-4"><StatusBadge status={app.status} /></TableCell>
-                                    <TableCell className="px-6 py-4">
-                                        {app.status === 'draft' ? (
-                                            <span className="text-slate-400">-</span>
-                                        ) : ['submitted', 'under_review', 'shortlisted', 'round_2_under_review', 'waitlisted'].includes(normalizeApplicationStatus(app.status) || app.status) ? (
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <button className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs transition-colors font-medium outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 ${getDecisionColor(app.adminData?.internalDecision)} ${updatingParams === app.id ? 'opacity-50 cursor-wait' : ''}`} disabled={updatingParams === app.id}>
-                                                        {allDecisionOptions.find(opt => opt.value === app.adminData?.internalDecision)?.label || 'Pending'}
-                                                        {updatingParams === app.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <ChevronDown className="w-3 h-3" />}
-                                                    </button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="start">
-                                                    <DropdownMenuItem onClick={() => handleDecisionUpdate(app.id!, null)} className="cursor-pointer">
-                                                        <span className="inline-block w-2 h-2 rounded-full mr-2 bg-slate-300"></span> Undecided
-                                                    </DropdownMenuItem>
-                                                    {getDecisionOptions(app.status).map(option => (
-                                                        <DropdownMenuItem key={option.value} onClick={() => handleDecisionUpdate(app.id!, option.value)} className="cursor-pointer">
-                                                            <span className={`inline-block w-2 h-2 rounded-full mr-2 ${option.color.split(' ')[0]}`}></span> {option.label}
-                                                        </DropdownMenuItem>
-                                                    ))}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        ) : (
-                                            <button className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium opacity-50 cursor-not-allowed ${getDecisionColor(app.adminData?.internalDecision)}`} disabled>
-                                                {allDecisionOptions.find(opt => opt.value === app.adminData?.internalDecision)?.label || 'Pending'}
-                                            </button>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="px-6 py-4">
-                                        <span className="text-sm text-slate-700">{app.timeline?.submittedAt ? new Date(app.timeline.submittedAt).toLocaleDateString() : "-"}</span>
-                                    </TableCell>
-                                    <TableCell className="px-6 py-4">
-                                        <span className="text-sm text-slate-700">{new Date(app.lastUpdatedAt || "").toLocaleDateString()}</span>
-                                    </TableCell>
-                                    <TableCell className="px-2 py-4">
+                                    <TableCell className="sticky left-[352px] z-20 min-w-[160px] bg-white px-6 py-4 shadow-[6px_0_12px_-10px_rgba(15,23,42,0.14)]"><StatusBadge status={app.status} /></TableCell>
+                                    {visibleMiddleColumns.map((column) => (
+                                        <TableCell key={column.id} className="px-6 py-4" style={{ minWidth: `${column.minWidth}px` }}>
+                                            {column.cell(app)}
+                                        </TableCell>
+                                    ))}
+                                    <TableCell className="sticky right-0 z-20 min-w-[170px] bg-white px-2 py-4 shadow-[-6px_0_12px_-10px_rgba(15,23,42,0.14)]">
                                         <div className="flex flex-col items-end gap-2">
                                             <div className="flex justify-end gap-1">
                                                 <Link href={`/admin/application?id=${app.id}`}>
