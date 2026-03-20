@@ -6,7 +6,7 @@ import path from 'path';
 export async function POST(req: NextRequest) {
     try {
         const resend = new Resend(process.env.RESEND_API_KEY);
-        const { to, subject, type, name, decision } = await req.json();
+        const { to, subject, type, name, decision, deadline } = await req.json();
 
         // Basic email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -18,21 +18,33 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing subject' }, { status: 400 });
         }
 
-        let html = '';
+        const templateMap: Record<string, string> = {
+            submission: 'submission.html',
+            round2_submission: 'round2-submission.html',
+            round2: 'round2.html',
+            decision_accepted: 'decision-accepted.html',
+            decision_rejected: 'decision-rejected.html',
+            decision_waitlisted: 'decision-waitlisted.html',
+            decision_waitlist_promoted: 'decision-waitlist-promoted.html',
+        };
 
-        if (type === 'submission') {
-            const templatePath = path.join(process.cwd(), 'lib/email-templates/submission.html');
-            const template = fs.readFileSync(templatePath, 'utf8');
-            html = template.replace('{{name}}', name || 'Applicant');
-        } else if (type === 'decision') {
-            const templatePath = path.join(process.cwd(), 'lib/email-templates/decision.html');
-            const template = fs.readFileSync(templatePath, 'utf8');
-            html = template.replace('{{name}}', name || 'Applicant');
-        } else if (type === 'round2') {
-            const templatePath = path.join(process.cwd(), 'lib/email-templates/round2.html');
-            const template = fs.readFileSync(templatePath, 'utf8');
-            html = template.replace('{{name}}', name || 'Applicant');
+        const templateFile = templateMap[type];
+        if (!templateFile) {
+            return NextResponse.json({ error: 'Unsupported email type' }, { status: 400 });
         }
+
+        const templatePath = path.join(process.cwd(), 'lib/email-templates', templateFile);
+        const template = fs.readFileSync(templatePath, 'utf8');
+        const replacements: Record<string, string> = {
+            '{{name}}': name || 'Applicant',
+            '{{decision}}': decision || '',
+            '{{deadline}}': deadline || '',
+        };
+
+        let html = template;
+        Object.entries(replacements).forEach(([token, value]) => {
+            html = html.replaceAll(token, value);
+        });
 
         const { data, error } = await resend.emails.send({
             from: 'Jianshan Academy <noreply@jianshanacademy.com>',

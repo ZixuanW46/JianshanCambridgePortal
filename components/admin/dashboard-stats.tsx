@@ -1,5 +1,6 @@
 import { Application } from "@/lib/types";
 import { Users, FileText, CheckCircle, Clock } from "lucide-react";
+import { normalizeApplicationStatus } from "@/lib/application-status";
 
 interface DashboardStatsProps {
     applications: Application[];
@@ -9,10 +10,10 @@ export function DashboardStats({ applications }: DashboardStatsProps) {
     const total = applications.length;
     const submitted = applications.filter(app => app.status !== 'draft').length;
     const pendingReview = applications.filter(app =>
-        app.status === 'submitted' || app.status === 'under_review'
+        ['submitted', 'under_review', 'round_2_under_review'].includes(normalizeApplicationStatus(app.status) || app.status)
     ).length;
     const accepted = applications.filter(app =>
-        app.status === 'accepted' || app.status === 'accepted_pending_payment' || app.status === 'accepted_paid' || app.status === 'payment_received' || app.status === 'enrolled'
+        ['accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received'].includes(normalizeApplicationStatus(app.status) || app.status)
     ).length;
 
     const stats = [

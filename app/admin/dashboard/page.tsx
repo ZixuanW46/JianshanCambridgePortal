@@ -6,14 +6,16 @@ import { useRouter } from "next/navigation";
 import { Application } from "@/lib/types";
 import { dbService } from "@/lib/db-service";
 import { Loader2 } from "lucide-react";
-import { DashboardStats } from "@/components/admin/dashboard-stats";
 import { AdminApplicationTable } from "@/components/admin/application-table";
+import { AdminWorkflowOverview } from "@/components/admin/workflow-overview";
+import { type AdminStatusFilter } from "@/lib/admin-dashboard";
 
 export default function AdminDashboardPage() {
     const { user, loading: authLoading, isAdmin } = useAuth();
     const router = useRouter();
     const [applications, setApplications] = useState<Application[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedStatusFilter, setSelectedStatusFilter] = useState<AdminStatusFilter>("all");
 
     useEffect(() => {
         if (!authLoading) {
@@ -57,15 +59,22 @@ export default function AdminDashboardPage() {
                     <p className="text-slate-600 mt-1">Manage tutor applications and decisions.</p>
                 </div>
 
-                {/* Stats */}
                 <div className="mb-8">
-                    <DashboardStats applications={applications} />
+                    <AdminWorkflowOverview
+                        applications={applications}
+                        selectedStatus={selectedStatusFilter}
+                        onStatusSelect={setSelectedStatusFilter}
+                    />
                 </div>
 
                 {/* Applications Table */}
                 <div className="mb-8">
                     <h2 className="text-xl font-bold text-slate-900 mb-4">Applications</h2>
-                    <AdminApplicationTable applications={applications} />
+                    <AdminApplicationTable
+                        applications={applications}
+                        statusFilter={selectedStatusFilter}
+                        onStatusFilterChange={setSelectedStatusFilter}
+                    />
                 </div>
             </div>
         </div>

@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,6 +10,7 @@ import { dbService } from "@/lib/db-service";
 import { Button } from "@/components/ui/button";
 import { Check, FileText, Calendar, Mail, Loader2, ArrowRight, Flag, User, Eye, FilePen, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { normalizeApplicationStatus } from "@/lib/application-status";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { SCHOLARSHIP_FAQ_URL } from "@/lib/constants";
 import {
@@ -75,17 +77,74 @@ function getExpectedDecisionDateText(dateStr?: string) {
     });
 }
 
+type TimelineVisualState = 'completed' | 'current' | 'pending';
+
+function getTimelineStepState(currentStage: number, stepStage: number): TimelineVisualState {
+    if (currentStage > stepStage) return 'completed';
+    if (currentStage === stepStage) return 'current';
+    return 'pending';
+}
+
+function getTimelineStage(app: Application) {
+    switch (normalizeApplicationStatus(app.status)) {
+        case 'draft':
+            return 2;
+        case 'under_review':
+            return 4;
+        case 'shortlisted':
+            return 5;
+        case 'round_2_under_review':
+            return 6;
+        case 'accepted':
+        case 'accepted_pending_payment':
+        case 'accepted_paid':
+        case 'payment_received':
+        case 'offer_declined':
+        case 'rejected':
+        case 'waitlisted':
+            return 7;
+        default:
+            return 2;
+    }
+}
+
+function getTimelineNode(state: TimelineVisualState, completedIcon: ReactNode) {
+    if (state === 'completed') {
+        return (
+            <div className="size-8 rounded-full bg-primary flex items-center justify-center text-white z-10">
+                {completedIcon}
+            </div>
+        );
+    }
+
+    if (state === 'current') {
+        return (
+            <div className="size-8 rounded-full border-[3px] border-accent bg-white relative z-10 shadow-[0_0_15px_rgba(225,177,104,0.4)] flex items-center justify-center">
+                <div className="size-2.5 bg-accent rounded-full animate-pulse"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="size-8 rounded-full bg-muted border-2 border-border flex items-center justify-center text-muted-foreground z-10">
+            <div className="h-2 w-2 rounded-full bg-muted-foreground/30"></div>
+        </div>
+    );
+}
+
 function ProgressTimeline({ app }: { app: Application }) {
     const { status, submittedAt, createdAt, decisionReleasedAt } = app;
+    const currentStage = getTimelineStage(app);
+    const completeApplicationState = getTimelineStepState(currentStage, 2);
+    const applicationSubmittedState = getTimelineStepState(currentStage, 3);
+    const initialReviewState = getTimelineStepState(currentStage, 4);
+    const finalRoundSubmissionState = getTimelineStepState(currentStage, 5);
+    const finalReviewState = getTimelineStepState(currentStage, 6);
+    const finalDecisionState = getTimelineStepState(currentStage, 7);
 
-    const isSubmitted = status !== 'draft';
-    const isInitialReview = ['under_review', 'shortlisted', 'round_2_submitted', 'round_2_under_review', 'accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received', 'rejected', 'waitlisted', 'enrolled'].includes(status);
-    const isRound2Invited = ['shortlisted', 'round_2_submitted', 'round_2_under_review', 'accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received', 'waitlisted', 'enrolled'].includes(status) || !!app.section6_round_2;
-    const isRound2Submitted = ['round_2_submitted', 'round_2_under_review', 'accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received', 'rejected', 'waitlisted', 'enrolled'].includes(status) && !!app.section6_round_2;
-    const isDecisionReleased = ['accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received', 'rejected', 'waitlisted', 'enrolled'].includes(status);
+    const isDecisionReleased = finalDecisionState === 'current' || finalDecisionState === 'completed';
     const isOfferAccepted = isAcceptedPendingPayment(status) || isAcceptedPaid(status);
-
-    const showRound2Steps = status !== 'rejected' || !!app.section6_round_2;
+    const showRound2Steps = currentStage >= 5;
 
     return (
         <div className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-slate-100">
@@ -112,89 +171,68 @@ function ProgressTimeline({ app }: { app: Application }) {
                 {/* --- Step 2: Filling Application --- */}
                 {/* Icon Column */}
                 <div className="flex flex-col items-center gap-1 pt-1">
-                    {isSubmitted ? (
-                        <div className="size-8 rounded-full bg-primary flex items-center justify-center text-white z-10">
-                            <Check size={20} className="text-white" strokeWidth={3} />
-                        </div>
-                    ) : (
-                        <div className="size-8 rounded-full border-[3px] border-accent bg-white relative z-10 shadow-[0_0_15px_rgba(225,177,104,0.4)] flex items-center justify-center">
-                            <div className="size-2.5 bg-accent rounded-full animate-pulse"></div>
-                        </div>
-                    )}
+                    {getTimelineNode(completeApplicationState, <Check size={20} className="text-white" strokeWidth={3} />)}
                     <div className={cn(
                         "w-[2px] h-full min-h-[40px]",
-                        isSubmitted ? "bg-primary" : "bg-muted"
-                    )}></div>
-                </div>
-                {/* Text Column */}
-                <div className="flex flex-col pb-8 pt-1">
-                    <p className={cn("text-base font-bold leading-normal")}>
-                        Complete Application
-                    </p>
-                    <p className="text-sm text-muted-foreground font-normal leading-normal">
-                        {isSubmitted ? "Completed" : "In Progress..."}
-                    </p>
-                </div>
-
-                {/* --- Step 3: Application Submitted --- */}
-                {/* Icon Column */}
-                <div className="flex flex-col items-center gap-1 pt-1">
-                    {isSubmitted ? (
-                        <div className="size-8 rounded-full bg-primary flex items-center justify-center text-white z-10">
-                            <Check size={20} className="text-white" strokeWidth={3} />
-                        </div>
-                    ) : (
-                        <div className="size-8 rounded-full bg-muted border-2 border-border flex items-center justify-center text-muted-foreground z-10">
-                            <div className="h-2 w-2 rounded-full bg-muted-foreground/30"></div>
-                        </div>
-                    )}
-                    <div className={cn(
-                        "w-[2px] h-full min-h-[40px]",
-                        isInitialReview ? "bg-primary" : "bg-muted"
-                    )}></div>
-                </div>
-                {/* Text Column */}
-                <div className="flex flex-col pb-8 pt-1">
-                    <p className={cn("text-base font-bold leading-normal", !isSubmitted && "text-muted-foreground")}>Application Submitted</p>
-                    <p className="text-sm text-muted-foreground font-normal leading-normal">
-                        {isSubmitted ? `Submitted on ${formatDate(submittedAt)}` : "Pending Submission"}
-                    </p>
-                </div>
-
-                {/* --- Step 4: Initial Review --- */}
-                {/* Icon Column */}
-                <div className="flex flex-col items-center gap-1 pt-1">
-                    {isRound2Invited || isDecisionReleased ? (
-                        <div className="size-8 rounded-full bg-primary flex items-center justify-center text-white z-10">
-                            <Check size={20} className="text-white" strokeWidth={3} />
-                        </div>
-                    ) : isInitialReview ? (
-                        <div className="size-8 rounded-full border-[3px] border-accent bg-white relative z-10 shadow-[0_0_15px_rgba(225,177,104,0.4)] flex items-center justify-center">
-                            <div className="size-2.5 bg-accent rounded-full animate-pulse"></div>
-                        </div>
-                    ) : (
-                        <div className="size-8 rounded-full bg-muted border-2 border-border flex items-center justify-center text-muted-foreground z-10">
-                            <div className="h-2 w-2 rounded-full bg-muted-foreground/30"></div>
-                        </div>
-                    )}
-
-                    <div className={cn(
-                        "w-[2px] h-full min-h-[40px]",
-                        (isRound2Invited || (isDecisionReleased && !showRound2Steps)) ? "bg-primary" : "bg-muted"
+                        applicationSubmittedState === 'completed' || applicationSubmittedState === 'current' ? "bg-primary" : "bg-muted"
                     )}></div>
                 </div>
                 {/* Text Column */}
                 <div className="flex flex-col pb-8 pt-1">
                     <p className={cn(
                         "text-base font-bold leading-normal",
-                        isInitialReview && !(isRound2Invited || isDecisionReleased) ? "text-primary dark:text-accent" :
-                            !isInitialReview ? "text-muted-foreground" : "text-foreground"
+                        completeApplicationState === 'current' ? "text-primary dark:text-accent" : "text-foreground"
+                    )}>
+                        Complete Application
+                    </p>
+                    <p className="text-sm text-muted-foreground font-normal leading-normal">
+                        {completeApplicationState === 'completed' ? "Completed" : "In Progress..."}
+                    </p>
+                </div>
+
+                {/* --- Step 3: Application Submitted --- */}
+                {/* Icon Column */}
+                <div className="flex flex-col items-center gap-1 pt-1">
+                    {getTimelineNode(applicationSubmittedState, <Check size={20} className="text-white" strokeWidth={3} />)}
+                    <div className={cn(
+                        "w-[2px] h-full min-h-[40px]",
+                        initialReviewState === 'completed' || initialReviewState === 'current' ? "bg-primary" : "bg-muted"
+                    )}></div>
+                </div>
+                {/* Text Column */}
+                <div className="flex flex-col pb-8 pt-1">
+                    <p className={cn(
+                        "text-base font-bold leading-normal",
+                        applicationSubmittedState === 'current' ? "text-primary dark:text-accent" :
+                            applicationSubmittedState === 'pending' ? "text-muted-foreground" : "text-foreground"
+                    )}>Application Submitted</p>
+                    <p className="text-sm text-muted-foreground font-normal leading-normal">
+                        {applicationSubmittedState === 'pending' ? "Pending Submission" :
+                            submittedAt ? `Submitted on ${formatDate(submittedAt)}` : "Submitted"}
+                    </p>
+                </div>
+
+                {/* --- Step 4: Initial Review --- */}
+                {/* Icon Column */}
+                <div className="flex flex-col items-center gap-1 pt-1">
+                    {getTimelineNode(initialReviewState, <Check size={20} className="text-white" strokeWidth={3} />)}
+                    <div className={cn(
+                        "w-[2px] h-full min-h-[40px]",
+                        showRound2Steps && (finalRoundSubmissionState === 'completed' || finalRoundSubmissionState === 'current') ? "bg-primary" : "bg-muted"
+                    )}></div>
+                </div>
+                {/* Text Column */}
+                <div className="flex flex-col pb-8 pt-1">
+                    <p className={cn(
+                        "text-base font-bold leading-normal",
+                        initialReviewState === 'current' ? "text-primary dark:text-accent" :
+                            initialReviewState === 'pending' ? "text-muted-foreground" : "text-foreground"
                     )}>
                         Initial Review
                     </p>
                     <p className="text-sm text-muted-foreground font-normal leading-normal">
-                        {isInitialReview && !(isRound2Invited || isDecisionReleased) ? "Reviewing round 1 application" :
-                            (isRound2Invited || isDecisionReleased) ? "Review Completed" : "Awaiting Review"}
+                        {initialReviewState === 'current' ? "Reviewing round 1 application" :
+                            initialReviewState === 'completed' ? "Review Completed" : "Awaiting Review"}
                     </p>
                 </div>
 
@@ -204,70 +242,46 @@ function ProgressTimeline({ app }: { app: Application }) {
                         {/* --- Step 4.5: Round 2 --- */}
                         {/* Icon Column */}
                         <div className="flex flex-col items-center gap-1 pt-1">
-                            {isRound2Submitted ? (
-                                <div className="size-8 rounded-full bg-primary flex items-center justify-center text-white z-10">
-                                    <Check size={20} className="text-white" strokeWidth={3} />
-                                </div>
-                            ) : isRound2Invited ? (
-                                <div className="size-8 rounded-full border-[3px] border-accent bg-white relative z-10 shadow-[0_0_15px_rgba(225,177,104,0.4)] flex items-center justify-center">
-                                    <div className="size-2.5 bg-accent rounded-full animate-pulse"></div>
-                                </div>
-                            ) : (
-                                <div className="size-8 rounded-full bg-muted border-2 border-border flex items-center justify-center text-muted-foreground z-10">
-                                    <div className="h-2 w-2 rounded-full bg-muted-foreground/30"></div>
-                                </div>
-                            )}
+                            {getTimelineNode(finalRoundSubmissionState, <Check size={20} className="text-white" strokeWidth={3} />)}
                             <div className={cn(
                                 "w-[2px] h-full min-h-[40px]",
-                                isRound2Submitted ? "bg-primary" : "bg-muted"
+                                finalReviewState === 'completed' || finalReviewState === 'current' ? "bg-primary" : "bg-muted"
                             )}></div>
                         </div>
                         {/* Text Column */}
                         <div className="flex flex-col pb-8 pt-1">
                             <p className={cn(
                                 "text-base font-bold leading-normal",
-                                isRound2Invited && !isRound2Submitted ? "text-primary dark:text-accent" :
-                                    !isRound2Invited ? "text-muted-foreground" : "text-foreground"
+                                finalRoundSubmissionState === 'current' ? "text-primary dark:text-accent" :
+                                    finalRoundSubmissionState === 'pending' ? "text-muted-foreground" : "text-foreground"
                             )}>
                                 Final Round Submission
                             </p>
                             <p className="text-sm text-muted-foreground font-normal leading-normal">
-                                {isRound2Invited && !isRound2Submitted ? "Please submit your teaching challenge" :
-                                    isRound2Submitted ? "Final Round Submitted" : "Teaching Challenge"}
+                                {finalRoundSubmissionState === 'current' ? "Please submit your teaching challenge" :
+                                    finalRoundSubmissionState === 'completed' ? "Final Round Submitted" : "Teaching Challenge"}
                             </p>
                         </div>
 
                         {/* --- Step 4.75: Round 2 Review --- */}
                         <div className="flex flex-col items-center gap-1 pt-1">
-                            {isDecisionReleased ? (
-                                <div className="size-8 rounded-full bg-primary flex items-center justify-center text-white z-10">
-                                    <Check size={20} className="text-white" strokeWidth={3} />
-                                </div>
-                            ) : isRound2Submitted ? (
-                                <div className="size-8 rounded-full border-[3px] border-accent bg-white relative z-10 shadow-[0_0_15px_rgba(225,177,104,0.4)] flex items-center justify-center">
-                                    <div className="size-2.5 bg-accent rounded-full animate-pulse"></div>
-                                </div>
-                            ) : (
-                                <div className="size-8 rounded-full bg-muted border-2 border-border flex items-center justify-center text-muted-foreground z-10">
-                                    <div className="h-2 w-2 rounded-full bg-muted-foreground/30"></div>
-                                </div>
-                            )}
+                            {getTimelineNode(finalReviewState, <Check size={20} className="text-white" strokeWidth={3} />)}
                             <div className={cn(
                                 "w-[2px] h-full min-h-[40px]",
-                                isDecisionReleased ? "bg-primary" : "bg-muted"
+                                finalDecisionState === 'current' || finalDecisionState === 'completed' ? "bg-primary" : "bg-muted"
                             )}></div>
                         </div>
                         <div className="flex flex-col pb-8 pt-1">
                             <p className={cn(
                                 "text-base font-bold leading-normal",
-                                isRound2Submitted && !isDecisionReleased ? "text-primary dark:text-accent" :
-                                    !isRound2Submitted ? "text-muted-foreground" : "text-foreground"
+                                finalReviewState === 'current' ? "text-primary dark:text-accent" :
+                                    finalReviewState === 'pending' ? "text-muted-foreground" : "text-foreground"
                             )}>
                                 Final Review
                             </p>
                             <p className="text-sm text-muted-foreground font-normal leading-normal">
-                                {isRound2Submitted && !isDecisionReleased ? "Reviewing your full application" :
-                                    isDecisionReleased ? "Review Completed" : "Awaiting Round 2"}
+                                {finalReviewState === 'current' ? "Reviewing your full application" :
+                                    finalReviewState === 'completed' ? "Review Completed" : "Awaiting Round 2"}
                             </p>
                         </div>
                     </>
@@ -297,7 +311,8 @@ function ProgressTimeline({ app }: { app: Application }) {
                 <div className={cn("flex flex-col pt-1", isOfferAccepted ? "pb-8" : "pb-0")}>
                     <p className={cn(
                         "text-base font-bold leading-normal",
-                        isDecisionReleased ? "text-foreground" : "text-muted-foreground"
+                        finalDecisionState === 'current' ? "text-primary dark:text-accent" :
+                            isDecisionReleased ? "text-foreground" : "text-muted-foreground"
                     )}>
                         Final Decision
                     </p>
@@ -467,6 +482,7 @@ export default function DashboardPage() {
 
     const isPendingPayment = isAcceptedPendingPayment(app.status);
     const isPaid = isAcceptedPaid(app.status);
+    const normalizedStatus = normalizeApplicationStatus(app.status);
 
     return (
         <div className="container max-w-7xl mx-auto px-4 py-8 md:py-12">
@@ -525,7 +541,7 @@ export default function DashboardPage() {
                                         </Button>
                                     </div>
                                 </>
-                            ) : ['accepted', 'rejected', 'waitlisted'].includes(app.status) ? (
+                            ) : ['accepted', 'offer_declined', 'rejected', 'waitlisted'].includes(normalizedStatus || '') ? (
                                 <>
                                     <h2 className="text-2xl md:text-3xl font-bold leading-tight">Application Result Released 🔔</h2>
                                     <p className="text-muted-foreground leading-relaxed">
@@ -533,13 +549,13 @@ export default function DashboardPage() {
                                     </p>
                                     <div className="mt-4 pt-4 border-t flex gap-4">
                                         <Button size="lg" asChild>
-                                            <Link href="/acceptance">
+                                            <Link href="/result">
                                                 View Application Result <ArrowRight className="ml-2 h-5 w-5" strokeWidth={3} />
                                             </Link>
                                         </Button>
                                     </div>
                                 </>
-                            ) : app.status === 'draft' ? (
+                            ) : normalizedStatus === 'draft' ? (
                                 // Draft State
                                 <>
                                     <h2 className="text-2xl md:text-3xl font-bold leading-tight">Application In Progress ✍️</h2>
@@ -554,7 +570,7 @@ export default function DashboardPage() {
                                         </Button>
                                     </div>
                                 </>
-                            ) : app.status === 'shortlisted' ? (
+                            ) : normalizedStatus === 'shortlisted' ? (
                                 <>
                                     <h2 className="text-2xl md:text-3xl font-bold leading-tight">You&apos;re Shortlisted! ✨</h2>
                                     <p className="text-muted-foreground leading-relaxed">
@@ -568,7 +584,7 @@ export default function DashboardPage() {
                                         </Button>
                                     </div>
                                 </>
-                            ) : ['round_2_submitted', 'round_2_under_review'].includes(app.status) ? (
+                            ) : normalizedStatus === 'round_2_under_review' ? (
                                 <>
                                     <h2 className="text-2xl md:text-3xl font-bold leading-tight">Final Round Under Review 👀</h2>
                                     <p className="text-muted-foreground leading-relaxed">

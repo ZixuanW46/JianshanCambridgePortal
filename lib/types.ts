@@ -1,7 +1,7 @@
 export interface Application {
     id: string;
     userId: string;
-    status: 'draft' | 'submitted' | 'under_review' | 'shortlisted' | 'round_2_submitted' | 'round_2_under_review' | 'accepted' | 'accepted_pending_payment' | 'accepted_paid' | 'payment_received' | 'rejected' | 'waitlisted' | 'enrolled';
+    status: 'draft' | 'submitted' | 'under_review' | 'shortlisted' | 'round_2_submitted' | 'round_2_under_review' | 'accepted' | 'accepted_pending_payment' | 'accepted_paid' | 'payment_received' | 'offer_declined' | 'rejected' | 'waitlisted';
     submittedAt?: string;
     createdAt?: string;
     lastUpdatedAt: string;
@@ -15,7 +15,7 @@ export interface Application {
         full_name: string;
         gender?: string;
         gender_other?: string | null;
-        nationality: string;
+        nationality: string[];
         date_of_birth: string;
         phone_number: string;
         personal_email: string;

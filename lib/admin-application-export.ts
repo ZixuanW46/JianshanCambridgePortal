@@ -1,5 +1,7 @@
 import * as XLSX from "xlsx";
 
+import { formatNationalityList } from "@/lib/application-form";
+import { normalizeApplicationStatus } from "@/lib/application-status";
 import { Application } from "@/lib/types";
 
 type ExportRow = Record<string, string>;
@@ -56,7 +58,7 @@ export function buildAdminApplicationExportRows(applications: Application[]): Ex
     return applications.map((application) => ({
         "Application ID": formatValue(application.id),
         "User ID": formatValue(application.userId),
-        "Status": formatValue(application.status),
+        "Status": formatValue(normalizeApplicationStatus(application.status) || application.status),
         "Internal Decision": formatValue(application.adminData?.internalDecision),
         "Created At": formatValue(application.createdAt),
         "Submitted At": formatValue(application.submittedAt || application.timeline?.submittedAt),
@@ -69,7 +71,7 @@ export function buildAdminApplicationExportRows(applications: Application[]): Ex
         "Phone Number": formatValue(application.section1_personal?.phone_number),
         "Date of Birth": formatValue(application.section1_personal?.date_of_birth),
         "Gender": getDisplayGender(application),
-        "Nationality": formatValue(application.section1_personal?.nationality),
+        "Nationality": formatNationalityList(application.section1_personal?.nationality),
         "College": formatValue(application.section1_personal?.college),
         "Subject": getDisplaySubject(application),
         "Year of Study": getDisplayYearOfStudy(application),

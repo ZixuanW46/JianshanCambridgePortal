@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { DecisionCard } from "@/components/admin/decision-card";
 import { NotesSection } from "@/components/admin/notes-section";
 import Link from "next/link";
+import { formatNationalityList } from "@/lib/application-form";
 
 function AdminApplicationDetailContent() {
     const { user, loading: authLoading, isAdmin } = useAuth();
@@ -72,7 +73,7 @@ function AdminApplicationDetailContent() {
         gender: (application.section1_personal?.gender === 'Other' && application.section1_personal?.gender_other)
             ? application.section1_personal.gender_other
             : (application.section1_personal?.gender || ''),
-        nationality: application.section1_personal?.nationality || '',
+        nationality: formatNationalityList(application.section1_personal?.nationality) || '',
         college: application.section1_personal?.college || '',
         yearOfStudy: application.section1_personal?.year_of_study === 'Other'
             ? application.section1_personal?.year_of_study_other || 'Other'

@@ -23,9 +23,13 @@ import { Application } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatStatusLabel, getNextStatus, getPreviousStatus, InternalDecision } from "@/lib/admin-workflow";
 import { downloadApplicationsExcel } from "@/lib/admin-application-export";
+import { normalizeApplicationStatus } from "@/lib/application-status";
+import { ADMIN_STATUS_FILTER_OPTIONS, type AdminStatusFilter } from "@/lib/admin-dashboard";
 
 interface AdminApplicationTableProps {
     applications: Application[];
+    statusFilter?: AdminStatusFilter;
+    onStatusFilterChange?: (status: AdminStatusFilter) => void;
 }
 
 const allDecisionOptions: Array<{ value: InternalDecision; label: string; color: string }> = [
@@ -36,13 +40,33 @@ const allDecisionOptions: Array<{ value: InternalDecision; label: string; color:
 ];
 
 const getDecisionOptions = (status: string) => {
-    if (status === 'under_review') {
+    const normalizedStatus = normalizeApplicationStatus(status as Application["status"]) || status;
+
+    if (normalizedStatus === 'under_review') {
         return allDecisionOptions.filter(o => o.value === 'shortlisted' || o.value === 'rejected');
     }
-    if (status === 'round_2_submitted' || status === 'round_2_under_review') {
+    if (normalizedStatus === 'round_2_under_review') {
+        return allDecisionOptions.filter(o => o.value === 'accepted' || o.value === 'rejected' || o.value === 'waitlisted');
+    }
+    if (normalizedStatus === 'waitlisted') {
         return allDecisionOptions.filter(o => o.value === 'accepted' || o.value === 'rejected' || o.value === 'waitlisted');
     }
     return allDecisionOptions;
+};
+
+const matchesStatusFilter = (status: Application["status"], filter: AdminStatusFilter) => {
+    const normalizedStatus = normalizeApplicationStatus(status) || status;
+    if (filter === "all") return true;
+    if (filter === "offer_open") {
+        return normalizedStatus === "accepted" || normalizedStatus === "accepted_pending_payment";
+    }
+    return normalizedStatus === filter;
+};
+
+const formatAdminStatusFilterLabel = (status: AdminStatusFilter) => {
+    if (status === "all") return "All Statuses";
+    if (status === "offer_open") return "Offer Open";
+    return status.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
 const getDecisionColor = (decision: string | null | undefined) => {
@@ -58,28 +82,45 @@ const getInitials = (name: string) => {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 
-export function AdminApplicationTable({ applications }: AdminApplicationTableProps) {
+export function AdminApplicationTable({
+    applications,
+    statusFilter: controlledStatusFilter,
+    onStatusFilterChange,
+}: AdminApplicationTableProps) {
     const router = useRouter();
     const [localApps, setLocalApps] = useState<Application[]>(applications);
 
     useEffect(() => { setLocalApps(applications); }, [applications]);
 
     const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("all");
+    const [uncontrolledStatusFilter, setUncontrolledStatusFilter] = useState<AdminStatusFilter>("all");
     const [decisionFilter, setDecisionFilter] = useState("all");
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [updatingParams, setUpdatingParams] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [expandedActionRowId, setExpandedActionRowId] = useState<string | null>(null);
     const itemsPerPage = 10;
+    const statusFilter = controlledStatusFilter ?? uncontrolledStatusFilter;
+
+    const handleStatusFilterChange = (nextStatus: AdminStatusFilter) => {
+        if (controlledStatusFilter === undefined) {
+            setUncontrolledStatusFilter(nextStatus);
+        }
+        onStatusFilterChange?.(nextStatus);
+    };
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, decisionFilter, statusFilter]);
 
     const safeApps = localApps || [];
     const filteredApps = safeApps.filter(app => {
         const searchTerm = search.toLowerCase();
         const fullName = (app.section1_personal?.full_name || "").toLowerCase();
         const email = (app.section1_personal?.personal_email || app.section1_personal?.cambridge_email || "").toLowerCase();
+        const normalizedStatus = normalizeApplicationStatus(app.status) || app.status;
         const searchMatch = fullName.includes(searchTerm) || email.includes(searchTerm);
-        const statusMatch = statusFilter === "all" || app.status === statusFilter;
+        const statusMatch = matchesStatusFilter(app.status, statusFilter);
         let decisionMatch = true;
         if (decisionFilter === "all") decisionMatch = true;
         else if (decisionFilter === "undecided") decisionMatch = !app.adminData?.internalDecision;
@@ -143,7 +184,8 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
     };
 
     const isEligibleForRelease = (app: Application) => {
-        return ['under_review', 'round_2_submitted', 'round_2_under_review'].includes(app.status) && !!app.adminData?.internalDecision;
+        const normalizedStatus = normalizeApplicationStatus(app.status) || app.status;
+        return ['under_review', 'round_2_under_review', 'waitlisted'].includes(normalizedStatus) && !!app.adminData?.internalDecision;
     };
 
     const eligibleApps = filteredApps.filter(isEligibleForRelease);
@@ -312,9 +354,9 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                                     <DropdownMenuContent align="start">
                                         <DropdownMenuLabel>Filter Status</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        {['all', 'draft', 'submitted', 'under_review', 'shortlisted', 'round_2_submitted', 'round_2_under_review', 'accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received', 'enrolled', 'rejected', 'waitlisted'].map(s => (
-                                            <DropdownMenuCheckboxItem key={s} checked={statusFilter === s} onCheckedChange={() => setStatusFilter(s)}>
-                                                {s === 'all' ? 'All Statuses' : s.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                        {ADMIN_STATUS_FILTER_OPTIONS.map(s => (
+                                            <DropdownMenuCheckboxItem key={s} checked={statusFilter === s} onCheckedChange={() => handleStatusFilterChange(s)}>
+                                                {formatAdminStatusFilterLabel(s)}
                                             </DropdownMenuCheckboxItem>
                                         ))}
                                     </DropdownMenuContent>
@@ -373,7 +415,7 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                                     <TableCell className="px-6 py-4">
                                         {app.status === 'draft' ? (
                                             <span className="text-slate-400">-</span>
-                                        ) : ['submitted', 'under_review', 'shortlisted', 'round_2_submitted', 'round_2_under_review'].includes(app.status) ? (
+                                        ) : ['submitted', 'under_review', 'shortlisted', 'round_2_under_review', 'waitlisted'].includes(normalizeApplicationStatus(app.status) || app.status) ? (
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <button className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs transition-colors font-medium outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 ${getDecisionColor(app.adminData?.internalDecision)} ${updatingParams === app.id ? 'opacity-50 cursor-wait' : ''}`} disabled={updatingParams === app.id}>
@@ -412,16 +454,17 @@ export function AdminApplicationTable({ applications }: AdminApplicationTablePro
                                                         <Eye className="h-4 w-4" />
                                                     </Button>
                                                 </Link>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                                                    title="Confirm payment received"
-                                                    disabled={app.status !== 'accepted_paid'}
-                                                    onClick={() => setConfirmAction({ type: 'confirm_payment', userId: app.id! })}
-                                                >
-                                                    <Banknote className="h-4 w-4" />
-                                                </Button>
+                                                {app.status === 'accepted_paid' && !!app.offerAcceptance?.submittedAt && !!app.offerAcceptance?.transfer_confirmed && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                        title="Confirm payment received"
+                                                        onClick={() => setConfirmAction({ type: 'confirm_payment', userId: app.id! })}
+                                                    >
+                                                        <Banknote className="h-4 w-4" />
+                                                    </Button>
+                                                )}
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"

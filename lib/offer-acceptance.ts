@@ -2,7 +2,6 @@ import type { Application } from "@/lib/types";
 
 export const ACCEPTED_PENDING_PAYMENT_STATUSES: Application["status"][] = [
     "accepted_pending_payment",
-    "enrolled",
 ];
 
 export const ACCEPTED_COMPLETED_STATUSES: Application["status"][] = [
@@ -14,6 +13,10 @@ export const ACCEPTED_FLOW_STATUSES: Application["status"][] = [
     "accepted",
     ...ACCEPTED_PENDING_PAYMENT_STATUSES,
     ...ACCEPTED_COMPLETED_STATUSES,
+];
+
+export const OFFER_DECLINED_STATUSES: Application["status"][] = [
+    "offer_declined",
 ];
 
 export function formatHumanDate(dateStr?: string) {
@@ -75,4 +78,8 @@ export function isAcceptedPaid(status?: string) {
 
 export function isAcceptedFlowStatus(status?: string) {
     return ACCEPTED_FLOW_STATUSES.includes(status as Application["status"]);
+}
+
+export function isOfferDeclined(status?: string) {
+    return OFFER_DECLINED_STATUSES.includes(status as Application["status"]);
 }

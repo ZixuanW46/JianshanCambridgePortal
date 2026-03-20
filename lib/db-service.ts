@@ -16,6 +16,13 @@ import { getSyncedInternalDecision } from '@/lib/admin-workflow';
 
 const COLLECTION = 'applications';
 
+function getDecisionEmailType(status: string) {
+    if (status === 'accepted') return 'decision_accepted';
+    if (status === 'rejected') return 'decision_rejected';
+    if (status === 'waitlisted') return 'decision_waitlisted';
+    return null;
+}
+
 export const dbService = {
     // Get user's application
     async getMyApplication(userId: string): Promise<Application | null> {
@@ -132,10 +139,36 @@ export const dbService = {
         const docRef = doc(db, COLLECTION, userId);
 
         await updateDoc(docRef, {
-            status: 'round_2_submitted',
+            status: 'round_2_under_review',
+            'adminData.internalDecision': null,
             section6_round_2: round2Data,
             lastUpdatedAt: timestamp,
         });
+
+        // Email notification via API route
+        try {
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                const email = data.section1_personal?.personal_email || data.section1_personal?.cambridge_email;
+                const name = data.section1_personal?.full_name || '';
+
+                if (email) {
+                    await fetch('/api/send-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to: email,
+                            subject: 'Final Round Submission Received - Jianshan Scholarship 2026',
+                            type: 'round2_submission',
+                            name,
+                        }),
+                    }).catch(err => console.error("Failed to send round 2 submission email:", err));
+                }
+            }
+        } catch (err) {
+            console.error("Round 2 notification error:", err);
+        }
     },
 
     // Save round 2 draft without changing the application status
@@ -181,6 +214,7 @@ export const dbService = {
                 const data = docSnap.data();
                 const email = data.section1_personal?.personal_email || data.section1_personal?.cambridge_email;
                 const name = data.section1_personal?.full_name || '';
+                const emailType = getDecisionEmailType(newStatus);
                 if (email) {
                     try {
                         await fetch('/api/send-email', {
@@ -189,7 +223,7 @@ export const dbService = {
                             body: JSON.stringify({
                                 to: email,
                                 subject: 'Application Update - Jianshan Scholarship 2026',
-                                type: 'decision',
+                                type: emailType,
                                 name,
                                 decision: newStatus,
                             }),
@@ -266,13 +300,16 @@ export const dbService = {
 
         if (email) {
             try {
+                const emailType = publicStatus === 'shortlisted'
+                    ? 'round2'
+                    : getDecisionEmailType(publicStatus);
                 await fetch('/api/send-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         to: email,
                         subject: 'Application Update - Jianshan Scholarship 2026',
-                        type: publicStatus === 'shortlisted' ? 'round2' : 'decision',
+                        type: emailType,
                         name,
                         decision: publicStatus,
                     }),
@@ -342,17 +379,35 @@ export const dbService = {
         await this.moveApplicationStatus(userId, 'payment_received');
     },
 
+    // Applicant: Explicitly decline the offer after acceptance is released
+    async declineOffer(userId: string) {
+        const timestamp = new Date().toISOString();
+        const docRef = doc(db, COLLECTION, userId);
+
+        await updateDoc(docRef, {
+            status: 'offer_declined',
+            lastUpdatedAt: timestamp,
+        });
+    },
+
     // Admin: Move application to any workflow status and sync internal decision
     async moveApplicationStatus(userId: string, newStatus: Application['status']) {
         const timestamp = new Date().toISOString();
         const docRef = doc(db, COLLECTION, userId);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) {
+            throw new Error("Application not found.");
+        }
+
         const syncedDecision = getSyncedInternalDecision(newStatus);
 
-        await updateDoc(docRef, {
+        const updates: Record<string, unknown> = {
             status: newStatus,
             'adminData.internalDecision': syncedDecision,
             lastUpdatedAt: timestamp,
-        });
+        };
+
+        await updateDoc(docRef, updates);
     },
 
     // Applicant: Confirm Enrollment (legacy alias)

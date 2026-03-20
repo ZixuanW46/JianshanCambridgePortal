@@ -12,6 +12,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { normalizeApplicationStatus } from "@/lib/application-status";
 
 interface DecisionCardProps {
     applicationId: string;
@@ -23,6 +24,7 @@ interface DecisionCardProps {
 type DecisionType = 'shortlisted' | 'accepted' | 'rejected' | 'waitlisted';
 
 export function DecisionCard({ applicationId, currentInternalDecision, currentPublicStatus, onUpdate }: DecisionCardProps) {
+    const normalizedStatus = normalizeApplicationStatus(currentPublicStatus as never) || currentPublicStatus;
     const [loading, setLoading] = useState(false);
     const [showReleaseConfirm, setShowReleaseConfirm] = useState(false);
 
@@ -51,7 +53,11 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
         }
     };
 
-    const isReleased = ['shortlisted', 'accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received', 'rejected', 'waitlisted', 'enrolled'].includes(currentPublicStatus) && !['under_review', 'round_2_submitted', 'round_2_under_review'].includes(currentPublicStatus);
+    const isReleased = ['shortlisted', 'accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received', 'offer_declined', 'rejected', 'waitlisted'].includes(normalizedStatus) && !['under_review', 'round_2_under_review'].includes(normalizedStatus);
+    const isWaitlisted = normalizedStatus === 'waitlisted';
+    const canEditDecision = !loading && (!isReleased || isWaitlisted);
+    const canResetDecision = !!currentInternalDecision && canEditDecision;
+    const canReleaseDecision = !!currentInternalDecision && (!loading && (!isReleased || isWaitlisted));
 
     const allDecisionButtons = [
         {
@@ -84,9 +90,9 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
         }
     ];
 
-    const decisionButtons = currentPublicStatus === 'under_review'
+    const decisionButtons = normalizedStatus === 'under_review'
         ? allDecisionButtons.filter(b => ['shortlisted', 'rejected'].includes(b.type))
-        : ['round_2_submitted', 'round_2_under_review'].includes(currentPublicStatus)
+        : normalizedStatus === 'round_2_under_review'
             ? allDecisionButtons.filter(b => ['accepted', 'rejected', 'waitlisted'].includes(b.type))
             : allDecisionButtons;
 
@@ -128,10 +134,10 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
                         return (
                             <button
                                 key={button.type}
-                                onClick={() => !isReleased && handleSaveDecision(button.type)}
-                                disabled={loading || isReleased}
+                                onClick={() => canEditDecision && handleSaveDecision(button.type)}
+                                disabled={!canEditDecision}
                                 className={`flex flex-col items-center gap-2 px-2 py-3 rounded-xl border-2 transition-all duration-200 ${isActive ? button.activeColor : button.inactiveColor
-                                    } ${isActive ? 'shadow-md scale-105' : 'hover:shadow-sm'} ${isReleased ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    } ${isActive ? 'shadow-md scale-105' : 'hover:shadow-sm'} ${!canEditDecision ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                                 <Icon className="w-5 h-5" />
                                 <span className="text-sm font-medium">{button.label}</span>
@@ -149,8 +155,8 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
                             </span>
                         </div>
                         <button
-                            onClick={() => !isReleased && handleSaveDecision(null)}
-                            disabled={loading || isReleased}
+                            onClick={() => canResetDecision && handleSaveDecision(null)}
+                            disabled={!canResetDecision}
                             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:border-slate-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Reset decision"
                         >
@@ -174,7 +180,7 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
                     )}
                 </div>
 
-                {isReleased ? (
+                {isReleased && !isWaitlisted ? (
                     <div className="p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-center">
                         <p className="text-slate-500 text-sm">
                             This decision has been released to the applicant.
@@ -184,8 +190,8 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
                     <>
                         <button
                             onClick={() => setShowReleaseConfirm(true)}
-                            disabled={!currentInternalDecision || loading}
-                            className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 font-medium ${currentInternalDecision && !loading
+                            disabled={!canReleaseDecision}
+                            className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 font-medium ${canReleaseDecision
                                 ? 'bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg hover:-translate-y-0.5'
                                 : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                 }`}
@@ -198,7 +204,7 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
                             ) : (
                                 <>
                                     <Send className="w-4 h-4" />
-                                    <span>Release Result to Applicant</span>
+                                    <span>{isWaitlisted ? 'Release Updated Decision' : 'Release Result to Applicant'}</span>
                                 </>
                             )}
                         </button>
@@ -206,7 +212,9 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
                         <div className="flex items-start gap-2 text-slate-500 text-xs px-1">
                             <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-primary" />
                             <p>
-                                Confirmation email will be sent and applicant will see the result immediately.
+                                {isWaitlisted
+                                    ? 'You can update the internal decision for a waitlisted applicant and release the new result when you are ready.'
+                                    : 'Confirmation email will be sent and applicant will see the result immediately.'}
                             </p>
                         </div>
                     </>
@@ -219,7 +227,9 @@ export function DecisionCard({ applicationId, currentInternalDecision, currentPu
                         <DialogTitle>Confirm Release Decision</DialogTitle>
                         <DialogDescription>
                             Are you sure you want to release the result as <span className="font-bold text-slate-900">&quot;{currentInternalDecision?.toUpperCase()}&quot;</span>?
-                            This action is immediate and the applicant will be able to view their decision.
+                            {isWaitlisted
+                                ? ' This will update the applicant\'s previously released waitlist outcome and send the new result immediately.'
+                                : ' This action is immediate and the applicant will be able to view their decision.'}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>

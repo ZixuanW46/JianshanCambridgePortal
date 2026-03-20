@@ -1,14 +1,16 @@
 import { Badge } from "@/components/ui/badge";
+import { normalizeApplicationStatus } from "@/lib/application-status";
 
 interface StatusBadgeProps {
     status: string;
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {
+    const normalizedStatus = normalizeApplicationStatus(status as never) || status;
     let color = "bg-gray-500 hover:bg-gray-600";
-    let label = status;
+    let label = normalizedStatus;
 
-    switch (status) {
+    switch (normalizedStatus) {
         case 'draft':
             color = "bg-gray-400 hover:bg-gray-500";
             label = "Draft";
@@ -21,10 +23,14 @@ export function StatusBadge({ status }: StatusBadgeProps) {
             color = "bg-amber-500 hover:bg-amber-600";
             label = "Under Review";
             break;
+        case 'round_2_under_review':
+            color = "bg-amber-500 hover:bg-amber-600";
+            label = "Final Round Under Review";
+            break;
         case 'accepted':
         case 'decision_released':
             color = "bg-green-500 hover:bg-green-600";
-            label = status === 'decision_released' ? "Decision Released" : "Accepted";
+            label = normalizedStatus === 'decision_released' ? "Decision Released" : "Accepted";
             break;
         case 'accepted_pending_payment':
             color = "bg-amber-500 hover:bg-amber-600";
@@ -38,9 +44,9 @@ export function StatusBadge({ status }: StatusBadgeProps) {
             color = "bg-teal-600 hover:bg-teal-700";
             label = "Payment Received";
             break;
-        case 'enrolled':
-            color = "bg-emerald-600 hover:bg-emerald-700";
-            label = "Accepted - Pending Payment";
+        case 'offer_declined':
+            color = "bg-rose-600 hover:bg-rose-700";
+            label = "Offer Declined";
             break;
         case 'rejected':
             color = "bg-red-500 hover:bg-red-600";

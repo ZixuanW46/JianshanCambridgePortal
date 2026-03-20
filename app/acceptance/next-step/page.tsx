@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, CheckCircle2, Loader2, Landmark, ShieldCheck } from "lucide-react";
+import { formatNationalityList } from "@/lib/application-form";
 import {
     formatHumanDate,
     formatOfferAcceptanceDeadline,
@@ -51,7 +52,7 @@ export default function AcceptanceNextStepPage() {
         if (!app) return;
         setFormData({
             full_name_on_passport: app.offerAcceptance?.full_name_on_passport || app.section1_personal?.full_name || "",
-            nationality: app.offerAcceptance?.nationality || app.section1_personal?.nationality || "",
+            nationality: app.offerAcceptance?.nationality || formatNationalityList(app.section1_personal?.nationality) || "",
             passport_number: app.offerAcceptance?.passport_number || "",
             transfer_confirmed: !!app.offerAcceptance?.transfer_confirmed,
         });
