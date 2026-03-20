@@ -35,7 +35,6 @@ import {
     getWordLimit,
     validateApplication,
     validateField,
-    validateSection,
     ValidationFieldPath,
 } from "@/lib/application-form";
 
@@ -86,34 +85,6 @@ interface ApplicationFormProps {
 
 type SectionKey = keyof ApplicationFormData;
 
-const SECTION_ERROR_FIELDS: Record<Exclude<FormSection, 6>, ValidationFieldPath[]> = {
-    1: [
-        "section1_personal.full_name",
-        "section1_personal.gender",
-        "section1_personal.gender_other",
-        "section1_personal.nationality",
-        "section1_personal.date_of_birth",
-        "section1_personal.phone_number",
-        "section1_personal.personal_email",
-        "section1_personal.cambridge_email",
-        "section1_personal.college",
-        "section1_personal.subject",
-        "section1_personal.subject_other",
-        "section1_personal.year_of_study",
-        "section1_personal.year_of_study_other",
-    ],
-    2: ["section2_about_you.tell_us_about_yourself"],
-    3: ["section3_teaching.subject_passion", "section3_teaching.academy_motivation"],
-    4: ["section4_travel.excitement_about_china", "section4_travel.group_dynamics"],
-    5: [
-        "section5_availability.confirms_program_dates",
-        "section5_availability.confirms_flight_costs",
-        "section5_availability.confirms_visa_responsibility",
-        "section5_availability.dietary_restrictions",
-        "section5_availability.dietary_other",
-    ],
-};
-
 const SECTION_TITLES: Record<FormSection, string> = {
     1: "Personal Profile",
     2: "Your Story",
@@ -123,13 +94,6 @@ const SECTION_TITLES: Record<FormSection, string> = {
     6: "Review your answers",
 };
 
-const mergeErrors = (current: FormValidationError[], incoming: FormValidationError[]) => {
-    const map = new Map<ValidationFieldPath, FormValidationError>();
-    current.forEach((error) => map.set(error.field, error));
-    incoming.forEach((error) => map.set(error.field, error));
-    return Array.from(map.values());
-};
-
 const replaceFieldError = (
     current: FormValidationError[],
     field: ValidationFieldPath,
@@ -137,16 +101,6 @@ const replaceFieldError = (
 ) => {
     const filtered = current.filter((error) => error.field !== field);
     return nextError ? [...filtered, nextError] : filtered;
-};
-
-const replaceSectionErrors = (
-    current: FormValidationError[],
-    section: Exclude<FormSection, 6>,
-    nextErrors: FormValidationError[],
-) => {
-    const sectionFields = new Set(SECTION_ERROR_FIELDS[section]);
-    const filtered = current.filter((error) => !sectionFields.has(error.field));
-    return mergeErrors(filtered, nextErrors);
 };
 
 const getDisplaySubject = (formData: ApplicationFormData) =>
@@ -183,7 +137,6 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
     const [nationalityPickerOpen, setNationalityPickerOpen] = useState(false);
     const [nationalityQuery, setNationalityQuery] = useState("");
     const [touchedFields, setTouchedFields] = useState<Partial<Record<ValidationFieldPath, boolean>>>({});
-    const [validatedSections, setValidatedSections] = useState<Partial<Record<Exclude<FormSection, 6>, boolean>>>({});
     const [formData, setFormData] = useState<ApplicationFormData>(() => createInitialFormData(app));
     const [uploadedFileName, setUploadedFileName] = useState(() => getInitialUploadedFileName(app.section2_about_you?.additional_file_url || ""));
 
@@ -308,22 +261,8 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    const validateAndStoreSection = (section: Exclude<FormSection, 6>) => {
-        const errors = validateSection(formData, section);
-        setFieldErrors((prev) => replaceSectionErrors(prev, section, errors));
-        setValidatedSections((prev) => ({ ...prev, [section]: true }));
-        return errors;
-    };
-
     const goToSection = (target: FormSection) => {
         if (target === currentSection) return;
-
-        if (!isReadOnly && target > currentSection && currentSection <= 5) {
-            const errors = validateAndStoreSection(currentSection as Exclude<FormSection, 6>);
-            if (errors.length > 0) {
-                return;
-            }
-        }
 
         paginate(target > currentSection ? 1 : -1, target);
     };
@@ -336,8 +275,6 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
             return;
         }
 
-        const errors = validateAndStoreSection(currentSection as Exclude<FormSection, 6>);
-        if (errors.length > 0) return;
         paginate(1, (currentSection + 1) as FormSection);
     };
 
@@ -347,7 +284,6 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
         setSubmitAttempted(true);
         const errors = validateApplication(formData);
         setFieldErrors(errors);
-        setValidatedSections({ 1: true, 2: true, 3: true, 4: true, 5: true });
 
         if (errors.length > 0) {
             paginate(-1, 6);
@@ -522,19 +458,17 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                                         {renderFieldLabel("Gender", true, "section1_personal.gender")}
                                         <Select disabled={isReadOnly} value={formData.section1_personal.gender} onValueChange={v => {
                                             setFieldTouched("section1_personal.gender");
-                                            updateField("section1_personal", "gender", v, "section1_personal.gender");
-                                            if (v !== "Other") {
-                                                updateField("section1_personal", "gender_other", "", "section1_personal.gender_other");
-                                                setFieldErrors((prev) => replaceFieldError(prev, "section1_personal.gender_other", null));
-                                            }
-                                            syncFieldValidation({
+                                            const nextFormData = {
                                                 ...formData,
                                                 section1_personal: {
                                                     ...formData.section1_personal,
                                                     gender: v,
                                                     gender_other: v === "Other" ? formData.section1_personal.gender_other : "",
                                                 },
-                                            }, "section1_personal.gender");
+                                            };
+                                            setFormData(nextFormData);
+                                            syncFieldValidation(nextFormData, "section1_personal.gender");
+                                            syncFieldValidation(nextFormData, "section1_personal.gender_other");
                                         }}>
                                             <SelectTrigger className={cn(hasFieldError("section1_personal.gender") && shouldShowFieldError("section1_personal.gender") && "border-red-500 focus:ring-red-500")}>
                                                 <SelectValue placeholder="Select your gender" />
@@ -1300,19 +1234,6 @@ export function ApplicationForm({ app, isReadOnly = false, onSave, onSubmit, sav
                 </div>
             </div>
 
-            {!isReadOnly && currentSection !== 6 && validatedSections[currentSection as Exclude<FormSection, 6>] && sectionErrors[currentSection]?.length > 0 && (
-                <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200 mt-4 animate-in fade-in zoom-in duration-300">
-                    <p className="font-bold flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-red-500" />
-                        Please complete this section before moving on:
-                    </p>
-                    <ul className="list-disc pl-8 mt-2 text-sm grid grid-cols-1 sm:grid-cols-2 gap-1">
-                        {sectionErrors[currentSection].map((err) => (
-                            <li key={err.field}>{err.message}</li>
-                        ))}
-                    </ul>
-                </div>
-            )}
         </div>
     );
 }
