@@ -5,14 +5,13 @@ import { useAuth } from "@/lib/auth-context";
 import { useBackground } from "@/lib/use-background";
 
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Mail, UserPlus, ChevronRight, Loader2, AlertCircle } from "lucide-react";
+import { Mail, UserPlus, Loader2, AlertCircle } from "lucide-react";
 
 export default function LandingPage() {
   const router = useRouter();
-  const { user, loading, loginWithGoogle } = useAuth();
+  const { user, loading, isAdmin, loginWithGoogle } = useAuth();
   const { backgroundImage, isLoaded } = useBackground();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
@@ -23,9 +22,9 @@ export default function LandingPage() {
     try {
       await loginWithGoogle();
       // Router redirection is handled by the useEffect watching `user` and `loading`
-    } catch (error: any) {
+    } catch (error) {
       console.error("Google login failed", error);
-      setError(error.message || "Google sign-in failed.");
+      setError(error instanceof Error ? error.message : "Google sign-in failed.");
     } finally {
       setGoogleLoading(false);
     }
@@ -33,9 +32,9 @@ export default function LandingPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace('/dashboard');
+      router.replace(isAdmin ? '/admin/dashboard' : '/dashboard');
     }
-  }, [user, loading, router]);
+  }, [user, loading, isAdmin, router]);
 
   return (
     <div className="min-h-screen w-full bg-white lg:p-6 lg:flex lg:items-center lg:justify-center">

@@ -1,3 +1,23 @@
+export interface AiReviewResult {
+    status: 'pending' | 'completed' | 'failed';
+    model: string;
+    promptVersion: string;
+    generatedAt?: string;
+    summary?: string;
+    tags?: string[];
+    score?: number;
+    error?: string;
+}
+
+export interface ParsedAttachmentResult {
+    status: 'pending' | 'completed' | 'failed';
+    sourceUrl?: string;
+    fileType?: string;
+    extractedAt?: string;
+    textExcerpt?: string;
+    error?: string;
+}
+
 export interface Application {
     id: string;
     userId: string;
@@ -75,6 +95,17 @@ export interface Application {
             content: string;
             author: string;
             date: string;
+        }>;
+        aiReview?: {
+            round1?: AiReviewResult;
+            round2?: AiReviewResult;
+        };
+        parsedAttachment?: ParsedAttachmentResult;
+        ratings?: Record<string, {
+            score: number;
+            adminName: string;
+            adminEmail: string;
+            updatedAt: string;
         }>;
     };
 }

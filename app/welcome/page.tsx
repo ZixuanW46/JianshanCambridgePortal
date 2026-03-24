@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight, CheckCircle, FileText } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowRight, CheckCircle, FileText, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { dbService } from "@/lib/db-service";
 import { Application } from "@/lib/types";
@@ -10,7 +11,8 @@ import { SCHOLARSHIP_FAQ_URL } from "@/lib/constants";
 
 export default function WelcomePage() {
     const [imageLoaded, setImageLoaded] = useState(false);
-    const { user } = useAuth();
+    const router = useRouter();
+    const { user, loading: authLoading, isAdmin } = useAuth();
     const [application, setApplication] = useState<Application | null>(null);
     const [loadingApp, setLoadingApp] = useState(true);
 
@@ -21,20 +23,50 @@ export default function WelcomePage() {
     }, []);
 
     useEffect(() => {
+        if (authLoading) {
+            return;
+        }
+
+        if (!user) {
+            router.replace("/");
+            return;
+        }
+
+        if (isAdmin) {
+            router.replace("/admin/dashboard");
+            return;
+        }
+
         const fetchApp = async () => {
-            if (user?.uid) {
-                try {
-                    const app = await dbService.getMyApplication(user.uid);
-                    setApplication(app);
-                } catch (error) {
-                    console.error("Failed to fetch application:", error);
-                } finally {
-                    setLoadingApp(false);
+            try {
+                const app = await dbService.getMyApplication(user.uid);
+                if (app) {
+                    router.replace("/dashboard");
+                    return;
                 }
+
+                setApplication(app);
+            } catch (error) {
+                console.error("Failed to fetch application:", error);
+            } finally {
+                setLoadingApp(false);
             }
         };
+
         fetchApp();
-    }, [user]);
+    }, [user, authLoading, isAdmin, router]);
+
+    if (authLoading || loadingApp) {
+        return (
+            <div className="flex min-h-screen items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (!user || isAdmin || application) {
+        return null;
+    }
 
     return (
         <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 py-16 animate-in fade-in zoom-in duration-500">

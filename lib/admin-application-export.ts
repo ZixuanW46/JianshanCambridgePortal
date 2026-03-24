@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 
+import { getAverageApplicationRating, formatRatingValue } from "@/lib/admin-ratings";
 import { formatNationalityList } from "@/lib/application-form";
 import { normalizeApplicationStatus } from "@/lib/application-status";
 import { Application } from "@/lib/types";
@@ -60,6 +61,7 @@ export function buildAdminApplicationExportRows(applications: Application[]): Ex
         "User ID": formatValue(application.userId),
         "Status": formatValue(normalizeApplicationStatus(application.status) || application.status),
         "Internal Decision": formatValue(application.adminData?.internalDecision),
+        "Average Score": formatRatingValue(getAverageApplicationRating(application), { compact: true }),
         "Created At": formatValue(application.createdAt),
         "Submitted At": formatValue(application.submittedAt || application.timeline?.submittedAt),
         "Last Updated At": formatValue(application.lastUpdatedAt),

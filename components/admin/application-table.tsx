@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow
@@ -26,6 +26,15 @@ import { downloadApplicationsExcel } from "@/lib/admin-application-export";
 import { normalizeApplicationStatus } from "@/lib/application-status";
 import { ADMIN_STATUS_FILTER_OPTIONS, type AdminStatusFilter } from "@/lib/admin-dashboard";
 import { formatNationalityList } from "@/lib/application-form";
+import { useAuth } from "@/lib/auth-context";
+import {
+    formatRatingValue,
+    getAllRatingAdmins,
+    getApplicationRatingByAdmin,
+    getAverageApplicationRating,
+} from "@/lib/admin-ratings";
+import { resolveAdminDisplayName } from "@/lib/admin-profiles";
+import { getAverageAiReviewScore } from "@/lib/ai-review";
 
 interface AdminApplicationTableProps {
     applications: Application[];
@@ -34,13 +43,17 @@ interface AdminApplicationTableProps {
 }
 
 type ToggleableColumnId =
+    | "myScore"
+    | "averageScore"
+    | "aiScore"
     | "internalDecision"
     | "gender"
     | "yearOfStudy"
     | "subject"
     | "nationality"
     | "submitted"
-    | "lastUpdated";
+    | "lastUpdated"
+    | `rating:${string}`;
 
 const allDecisionOptions: Array<{ value: InternalDecision; label: string; color: string }> = [
     { value: 'shortlisted', label: 'Shortlisted', color: 'bg-purple-100 text-purple-700 hover:bg-purple-200' },
@@ -137,6 +150,8 @@ const getUniqueColumnFilterOptions = (
 };
 
 const DEFAULT_VISIBLE_COLUMNS: ToggleableColumnId[] = [
+    "myScore",
+    "averageScore",
     "internalDecision",
     "gender",
     "yearOfStudy",
@@ -146,12 +161,17 @@ const DEFAULT_VISIBLE_COLUMNS: ToggleableColumnId[] = [
     "lastUpdated",
 ];
 
+const isRatingColumnId = (columnId: ToggleableColumnId): columnId is `rating:${string}` => (
+    columnId.startsWith("rating:")
+);
+
 export function AdminApplicationTable({
     applications,
     statusFilter: controlledStatusFilter,
     onStatusFilterChange,
 }: AdminApplicationTableProps) {
     const router = useRouter();
+    const { user } = useAuth();
     const [localApps, setLocalApps] = useState<Application[]>(applications);
 
     useEffect(() => { setLocalApps(applications); }, [applications]);
@@ -165,6 +185,7 @@ export function AdminApplicationTable({
     const [visibleColumnIds, setVisibleColumnIds] = useState<ToggleableColumnId[]>(DEFAULT_VISIBLE_COLUMNS);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [updatingParams, setUpdatingParams] = useState<string | null>(null);
+    const [updatingRatingId, setUpdatingRatingId] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [expandedActionRowId, setExpandedActionRowId] = useState<string | null>(null);
     const itemsPerPage = 50;
@@ -181,10 +202,16 @@ export function AdminApplicationTable({
         setCurrentPage(1);
     }, [search, decisionFilter, statusFilter, genderFilter, yearOfStudyFilter, subjectFilter]);
 
-    const safeApps = localApps || [];
+    const safeApps = localApps;
     const genderFilterOptions = getUniqueColumnFilterOptions(safeApps, getDisplayGender);
     const yearOfStudyFilterOptions = getUniqueColumnFilterOptions(safeApps, getDisplayYearOfStudy);
     const subjectFilterOptions = getUniqueColumnFilterOptions(safeApps, getDisplaySubject);
+    const allRatingAdmins = useMemo(() => getAllRatingAdmins(safeApps), [safeApps]);
+    const ratingAdminColumns = useMemo(() => allRatingAdmins.map((admin) => ({
+        id: `rating:${admin.adminUid}` as const,
+        adminUid: admin.adminUid,
+        label: `Score: ${admin.label}`,
+    })), [allRatingAdmins]);
 
     const filteredApps = safeApps.filter(app => {
         const searchTerm = search.toLowerCase();
@@ -242,6 +269,19 @@ export function AdminApplicationTable({
         ));
     };
 
+    useEffect(() => {
+        const ratingColumnIds = new Set(ratingAdminColumns.map((column) => column.id));
+
+        setVisibleColumnIds((current) => {
+            const next = current.filter((columnId) => {
+                if (!isRatingColumnId(columnId)) return true;
+                return ratingColumnIds.has(columnId);
+            });
+
+            return next.length === current.length ? current : next;
+        });
+    }, [ratingAdminColumns]);
+
     const handleDecisionUpdate = async (userId: string, decision: InternalDecision | null) => {
         const previousApps = [...localApps];
         setLocalApps(current => current.map(app => {
@@ -262,6 +302,59 @@ export function AdminApplicationTable({
             setLocalApps(previousApps);
         } finally {
             setUpdatingParams(null);
+        }
+    };
+
+    const handleRatingUpdate = async (applicationId: string, score: number) => {
+        if (!user?.uid) {
+            alert("You must be signed in as an admin to rate applications.");
+            return;
+        }
+
+        const adminName = resolveAdminDisplayName({
+            adminUid: user.uid,
+            adminName: user.displayName,
+            adminEmail: user.email,
+        });
+        const adminEmail = user.email || "";
+        const previousApps = [...localApps];
+        const timestamp = new Date().toISOString();
+
+        setLocalApps((current) => current.map((app) => {
+            if (app.id !== applicationId) return app;
+
+            return {
+                ...app,
+                lastUpdatedAt: timestamp,
+                adminData: {
+                    ...app.adminData,
+                    ratings: {
+                        ...(app.adminData?.ratings || {}),
+                        [user.uid]: {
+                            score,
+                            adminName,
+                            adminEmail,
+                            updatedAt: timestamp,
+                        },
+                    },
+                },
+            };
+        }));
+
+        setUpdatingRatingId(applicationId);
+        try {
+            await dbService.setApplicationRating(applicationId, {
+                adminUid: user.uid,
+                adminName,
+                adminEmail,
+                score,
+            });
+        } catch (error) {
+            console.error("Failed to update rating:", error);
+            alert("Failed to update rating.");
+            setLocalApps(previousApps);
+        } finally {
+            setUpdatingRatingId(null);
         }
     };
 
@@ -367,7 +460,75 @@ export function AdminApplicationTable({
         </DropdownMenu>
     );
 
+    const renderRatingSelector = (app: Application) => {
+        const myRating = user?.uid ? getApplicationRatingByAdmin(app, user.uid) : null;
+        const isUpdating = updatingRatingId === app.id;
+
+        return (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <button
+                        className={`inline-flex min-w-[88px] items-center justify-between gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                            myRating
+                                ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        } ${isUpdating ? "cursor-wait opacity-60" : ""}`}
+                        disabled={isUpdating || !user?.uid}
+                    >
+                        <span>{myRating ? `${myRating.score}/10` : "Rate"}</span>
+                        {isUpdating ? <Loader2 className="h-3 w-3 animate-spin" /> : <ChevronDown className="h-3 w-3" />}
+                    </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                    <DropdownMenuLabel>Set Your Rating</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {Array.from({ length: 10 }, (_, index) => index + 1).map((score) => (
+                        <DropdownMenuItem
+                            key={score}
+                            onClick={() => handleRatingUpdate(app.id!, score)}
+                            className="cursor-pointer"
+                        >
+                            {score}/10
+                        </DropdownMenuItem>
+                    ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        );
+    };
+
     const middleColumns = [
+        {
+            id: "myScore" as const,
+            label: "My Score",
+            minWidth: 120,
+            visible: visibleColumnIds.includes("myScore"),
+            header: <span className="text-slate-500 text-xs uppercase tracking-wider font-medium">My Score</span>,
+            cell: (app: Application) => renderRatingSelector(app),
+        },
+        {
+            id: "averageScore" as const,
+            label: "Average Score",
+            minWidth: 130,
+            visible: visibleColumnIds.includes("averageScore"),
+            header: <span className="text-slate-500 text-xs uppercase tracking-wider font-medium">Average Score</span>,
+            cell: (app: Application) => (
+                <span className="text-sm font-medium text-slate-700">
+                    {formatRatingValue(getAverageApplicationRating(app), { compact: false })}
+                </span>
+            ),
+        },
+        {
+            id: "aiScore" as const,
+            label: "AI Score",
+            minWidth: 120,
+            visible: visibleColumnIds.includes("aiScore"),
+            header: <span className="text-slate-500 text-xs uppercase tracking-wider font-medium">AI Score</span>,
+            cell: (app: Application) => (
+                <span className="text-sm font-medium text-slate-700">
+                    {formatRatingValue(getAverageAiReviewScore(app), { compact: false })}
+                </span>
+            ),
+        },
         {
             id: "internalDecision" as const,
             label: "Internal Decision",
@@ -477,6 +638,21 @@ export function AdminApplicationTable({
                 <span className="text-sm text-slate-700">{new Date(app.lastUpdatedAt || "").toLocaleDateString()}</span>
             ),
         },
+        ...ratingAdminColumns.map((adminColumn) => ({
+            id: adminColumn.id,
+            label: adminColumn.label,
+            minWidth: 120,
+            visible: visibleColumnIds.includes(adminColumn.id),
+            header: <span className="text-slate-500 text-xs uppercase tracking-wider font-medium">{adminColumn.label}</span>,
+            cell: (app: Application) => {
+                const rating = getApplicationRatingByAdmin(app, adminColumn.adminUid);
+                return (
+                    <span className="text-sm font-medium text-slate-700">
+                        {rating ? `${rating.score}/10` : "-"}
+                    </span>
+                );
+            },
+        })),
     ];
 
     const visibleMiddleColumns = middleColumns.filter((column) => column.visible);
@@ -586,7 +762,7 @@ export function AdminApplicationTable({
                 <Table style={{ minWidth: `${tableMinWidth}px` }}>
                     <TableHeader>
                         <TableRow className="border-b border-slate-200 hover:bg-transparent">
-                            <TableHead className="sticky left-0 z-30 w-12 bg-white px-6 py-3 text-left shadow-[6px_0_12px_-10px_rgba(15,23,42,0.18)]">
+                            <TableHead className="sticky left-0 z-30 w-[72px] min-w-[72px] bg-white px-6 py-3 text-left shadow-[6px_0_12px_-10px_rgba(15,23,42,0.18)]">
                                 <Checkbox checked={isAllSelected} onCheckedChange={toggleSelectAll} disabled={eligibleApps.length === 0} className="border-slate-300 rounded w-4 h-4" />
                             </TableHead>
                             <TableHead className="sticky left-[72px] z-30 min-w-[280px] bg-white px-6 py-3 shadow-[6px_0_12px_-10px_rgba(15,23,42,0.18)]">
@@ -624,7 +800,7 @@ export function AdminApplicationTable({
                         ) : (
                             paginatedApps.map((app) => (
                                 <TableRow key={app.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                                    <TableCell className="sticky left-0 z-20 bg-white px-6 py-4 shadow-[6px_0_12px_-10px_rgba(15,23,42,0.14)]">
+                                    <TableCell className="sticky left-0 z-20 w-[72px] min-w-[72px] bg-white px-6 py-4 shadow-[6px_0_12px_-10px_rgba(15,23,42,0.14)]">
                                         <Checkbox checked={selectedIds.has(app.id!)} onCheckedChange={() => toggleSelectRow(app.id!)} disabled={!isEligibleForRelease(app)} className="border-slate-300 rounded w-4 h-4" />
                                     </TableCell>
                                     <TableCell className="sticky left-[72px] z-20 min-w-[280px] bg-white px-6 py-4 shadow-[6px_0_12px_-10px_rgba(15,23,42,0.14)]">

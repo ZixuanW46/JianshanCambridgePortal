@@ -10,7 +10,12 @@ export async function POST(req: NextRequest) {
 
         // Basic email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!to || !emailRegex.test(to)) {
+        const recipients = (Array.isArray(to) ? to : [to])
+            .filter((email): email is string => typeof email === 'string')
+            .map((email) => email.trim())
+            .filter((email, index, emails) => email.length > 0 && emails.indexOf(email) === index);
+
+        if (recipients.length === 0 || recipients.some((email) => !emailRegex.test(email))) {
             return NextResponse.json({ error: 'Invalid or missing email address' }, { status: 400 });
         }
 
@@ -48,7 +53,8 @@ export async function POST(req: NextRequest) {
 
         const { data, error } = await resend.emails.send({
             from: 'Jianshan Academy <noreply@jianshanacademy.com>',
-            to: [to],
+            to: recipients,
+            replyTo: 'camcapy@cambridgesu.co.uk',
             subject,
             html,
         });

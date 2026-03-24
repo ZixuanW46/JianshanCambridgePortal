@@ -23,6 +23,41 @@ function getDecisionEmailType(status: string) {
     return null;
 }
 
+function getNotificationRecipients(data: Record<string, any>): string[] {
+    const personalEmail = data.section1_personal?.personal_email;
+    const cambridgeEmail = data.section1_personal?.cambridge_email;
+
+    return [personalEmail, cambridgeEmail]
+        .filter((email): email is string => typeof email === 'string' && email.trim().length > 0)
+        .map((email) => email.trim())
+        .filter((email, index, emails) => emails.indexOf(email) === index);
+}
+
+async function triggerAiReviewGeneration(applicationId: string, round: 'round1' | 'round2') {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        throw new Error("Unable to trigger AI review: User is not authenticated.");
+    }
+
+    const token = await currentUser.getIdToken();
+    const response = await fetch('/api/ai-review', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+            applicationId,
+            round,
+        }),
+    });
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => null) as { error?: string } | null;
+        throw new Error(data?.error || `Failed to trigger AI review for ${round}.`);
+    }
+}
+
 export const dbService = {
     // Get user's application
     async getMyApplication(userId: string): Promise<Application | null> {
@@ -112,15 +147,15 @@ export const dbService = {
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                const email = data.section1_personal?.personal_email || data.section1_personal?.cambridge_email;
+                const recipients = getNotificationRecipients(data);
                 const name = data.section1_personal?.full_name || '';
 
-                if (email) {
+                if (recipients.length > 0) {
                     await fetch('/api/send-email', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            to: email,
+                            to: recipients,
                             subject: 'Application Update - Jianshan Scholarship 2026',
                             type: 'submission',
                             name,
@@ -130,6 +165,12 @@ export const dbService = {
             }
         } catch (err) {
             console.error("Notification error:", err);
+        }
+
+        try {
+            await triggerAiReviewGeneration(userId, 'round1');
+        } catch (err) {
+            console.error("Round 1 AI review trigger failed:", err);
         }
     },
 
@@ -150,15 +191,15 @@ export const dbService = {
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                const email = data.section1_personal?.personal_email || data.section1_personal?.cambridge_email;
+                const recipients = getNotificationRecipients(data);
                 const name = data.section1_personal?.full_name || '';
 
-                if (email) {
+                if (recipients.length > 0) {
                     await fetch('/api/send-email', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            to: email,
+                            to: recipients,
                             subject: 'Final Round Submission Received - Jianshan Scholarship 2026',
                             type: 'round2_submission',
                             name,
@@ -168,6 +209,12 @@ export const dbService = {
             }
         } catch (err) {
             console.error("Round 2 notification error:", err);
+        }
+
+        try {
+            await triggerAiReviewGeneration(userId, 'round2');
+        } catch (err) {
+            console.error("Round 2 AI review trigger failed:", err);
         }
     },
 
@@ -212,16 +259,16 @@ export const dbService = {
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                const email = data.section1_personal?.personal_email || data.section1_personal?.cambridge_email;
+                const recipients = getNotificationRecipients(data);
                 const name = data.section1_personal?.full_name || '';
                 const emailType = getDecisionEmailType(newStatus);
-                if (email) {
+                if (recipients.length > 0) {
                     try {
                         await fetch('/api/send-email', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                to: email,
+                                to: recipients,
                                 subject: 'Application Update - Jianshan Scholarship 2026',
                                 type: emailType,
                                 name,
@@ -268,6 +315,30 @@ export const dbService = {
         });
     },
 
+    // Admin: Set application rating
+    async setApplicationRating(
+        applicationId: string,
+        input: { adminUid: string; adminName: string; adminEmail: string; score: number },
+    ) {
+        if (!Number.isInteger(input.score) || input.score < 1 || input.score > 10) {
+            throw new Error("Rating score must be an integer between 1 and 10.");
+        }
+
+        if (!input.adminUid) {
+            throw new Error("Admin UID is required to save a rating.");
+        }
+
+        const timestamp = new Date().toISOString();
+        const docRef = doc(db, COLLECTION, applicationId);
+        await updateDoc(docRef, {
+            [`adminData.ratings.${input.adminUid}.score`]: input.score,
+            [`adminData.ratings.${input.adminUid}.adminName`]: input.adminName || "",
+            [`adminData.ratings.${input.adminUid}.adminEmail`]: input.adminEmail || "",
+            [`adminData.ratings.${input.adminUid}.updatedAt`]: timestamp,
+            lastUpdatedAt: timestamp,
+        });
+    },
+
     // Admin: Release Result
     async releaseResult(userId: string) {
         const docRef = doc(db, COLLECTION, userId);
@@ -295,10 +366,10 @@ export const dbService = {
         });
 
         // Send email notification
-        const email = data.section1_personal?.personal_email || data.section1_personal?.cambridge_email;
+        const recipients = getNotificationRecipients(data);
         const name = data.section1_personal?.full_name || '';
 
-        if (email) {
+        if (recipients.length > 0) {
             try {
                 const emailType = publicStatus === 'shortlisted'
                     ? 'round2'
@@ -307,7 +378,7 @@ export const dbService = {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        to: email,
+                        to: recipients,
                         subject: 'Application Update - Jianshan Scholarship 2026',
                         type: emailType,
                         name,
