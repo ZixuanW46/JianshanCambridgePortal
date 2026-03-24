@@ -46,9 +46,9 @@ export default function ForgotPasswordPage() {
                     <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
                         <CheckCircle2 className="h-8 w-8 text-green-600" />
                     </div>
-                    <h3 className={`font-bold ${isMobile ? 'text-lg' : 'text-xl'}`}>Email Sent!</h3>
+                    <h3 className={`font-bold ${isMobile ? 'text-lg' : 'text-xl'}`}>Check Your Inbox</h3>
                     <p className={`text-muted-foreground ${isMobile ? 'text-[12px]' : 'text-sm'}`}>
-                        We&apos;ve sent a password reset link to <strong>{email}</strong>. Please check your inbox and follow the instructions.
+                        If an account exists for <strong>{email}</strong>, a password reset link will arrive shortly. Please also check your spam folder.
                     </p>
                     <Button
                         variant="outline"
