@@ -54,6 +54,18 @@ function AdminApplicationDetailContent() {
         try {
             const app = await dbService.getMyApplication(applicationId);
             setApplication(app as Application);
+
+            if (app) {
+                void dbService.ensureAiReviewForApplication(app as Application)
+                    .then(async (count) => {
+                        if (count === 0) return;
+                        const refreshed = await dbService.getMyApplication(applicationId);
+                        setApplication(refreshed as Application);
+                    })
+                    .catch((error) => {
+                        console.error("Failed to backfill AI review for application:", error);
+                    });
+            }
         } catch (error) {
             console.error("Failed to fetch application:", error);
         } finally {

@@ -23,7 +23,7 @@ function getDecisionEmailType(status: string) {
     return null;
 }
 
-function getNotificationRecipients(data: Record<string, any>): string[] {
+function getNotificationRecipients(data: Partial<Application>): string[] {
     const personalEmail = data.section1_personal?.personal_email;
     const cambridgeEmail = data.section1_personal?.cambridge_email;
 
@@ -56,6 +56,30 @@ async function triggerAiReviewGeneration(applicationId: string, round: 'round1' 
         const data = await response.json().catch(() => null) as { error?: string } | null;
         throw new Error(data?.error || `Failed to trigger AI review for ${round}.`);
     }
+}
+
+function shouldBackfillRound1AiReview(application: Application) {
+    const status = application.status;
+    const round1Status = application.adminData?.aiReview?.round1?.status;
+
+    if (!['under_review', 'shortlisted', 'accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received', 'offer_declined', 'rejected', 'waitlisted', 'round_2_under_review'].includes(status)) {
+        return false;
+    }
+
+    return !round1Status;
+}
+
+function shouldBackfillRound2AiReview(application: Application) {
+    const status = application.status;
+    const hasRound2Submission = Boolean(application.section6_round_2?.video_url);
+    const round2Status = application.adminData?.aiReview?.round2?.status;
+
+    if (!hasRound2Submission) return false;
+    if (!['round_2_under_review', 'accepted', 'accepted_pending_payment', 'accepted_paid', 'payment_received', 'offer_declined', 'rejected', 'waitlisted'].includes(status)) {
+        return false;
+    }
+
+    return !round2Status;
 }
 
 export const dbService = {
@@ -243,6 +267,37 @@ export const dbService = {
             } as Application);
         });
         return apps;
+    },
+
+    async ensureAiReviewForApplication(application: Application) {
+        const jobs: Array<Promise<void>> = [];
+
+        if (shouldBackfillRound1AiReview(application)) {
+            jobs.push(triggerAiReviewGeneration(application.id, 'round1'));
+        }
+
+        if (shouldBackfillRound2AiReview(application)) {
+            jobs.push(triggerAiReviewGeneration(application.id, 'round2'));
+        }
+
+        if (jobs.length === 0) return 0;
+
+        await Promise.allSettled(jobs);
+        return jobs.length;
+    },
+
+    async backfillMissingAiReviews(applications: Application[]) {
+        const targets = applications.filter((application) =>
+            shouldBackfillRound1AiReview(application) || shouldBackfillRound2AiReview(application),
+        );
+
+        if (targets.length === 0) return 0;
+
+        await Promise.allSettled(
+            targets.map((application) => this.ensureAiReviewForApplication(application)),
+        );
+
+        return targets.length;
     },
 
     // Admin: Update application status directly

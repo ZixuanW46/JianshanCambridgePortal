@@ -36,15 +36,16 @@ function isValidRound(value: unknown): value is AiReviewRound {
 }
 
 async function generateAiReview(application: Application, round: AiReviewRound) {
-    const attachmentExcerpt = application.adminData?.parsedAttachment?.status === "completed"
-        ? application.adminData.parsedAttachment.textExcerpt || null
-        : null;
     const apiKey = process.env.ZHIPU_API_KEY;
     if (!apiKey) {
         throw new Error("ZHIPU_API_KEY is not configured.");
     }
 
-    const response = await fetch("https://open.bigmodel.cn/api/paas/v4/chat/completions", {
+    const attachmentExcerpt = application.adminData?.parsedAttachment?.status === "completed"
+        ? application.adminData.parsedAttachment.textExcerpt || null
+        : null;
+
+    const requestReview = async (nextAttachmentExcerpt: string | null) => fetch("https://open.bigmodel.cn/api/paas/v4/chat/completions", {
         method: "POST",
         headers: {
             Authorization: `Bearer ${apiKey}`,
@@ -61,15 +62,27 @@ async function generateAiReview(application: Application, round: AiReviewRound) 
                 },
                 {
                     role: "user",
-                    content: buildAiReviewPrompt(application, round, attachmentExcerpt),
+                    content: buildAiReviewPrompt(application, round, nextAttachmentExcerpt),
                 },
             ],
         }),
     });
 
+    let response = await requestReview(attachmentExcerpt);
+
     if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Zhipu API error (${response.status}): ${errorText.slice(0, 500)}`);
+        const isContentFiltered = response.status === 400 && errorText.includes('"code":"1301"');
+
+        if (attachmentExcerpt && isContentFiltered) {
+            response = await requestReview(null);
+            if (!response.ok) {
+                const retriedErrorText = await response.text();
+                throw new Error(`Zhipu API error (${response.status}): ${retriedErrorText.slice(0, 500)}`);
+            }
+        } else {
+            throw new Error(`Zhipu API error (${response.status}): ${errorText.slice(0, 500)}`);
+        }
     }
 
     const data = await response.json() as {

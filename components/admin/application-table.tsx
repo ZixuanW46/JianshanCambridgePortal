@@ -86,6 +86,8 @@ const matchesStatusFilter = (status: Application["status"], filter: AdminStatusF
     return normalizedStatus === filter;
 };
 
+const getSubmittedAtValue = (app: Application) => app.submittedAt || app.timeline?.submittedAt || "";
+
 const formatAdminStatusFilterLabel = (status: AdminStatusFilter) => {
     if (status === "all") return "All Statuses";
     if (status === "offer_open") return "Offer Open";
@@ -239,8 +241,8 @@ export function AdminApplicationTable({
             return nameA.localeCompare(nameB) * direction;
         }
         if (sortConfig.key === 'submitted') {
-            const timeA = new Date(a.timeline?.submittedAt || 0).getTime();
-            const timeB = new Date(b.timeline?.submittedAt || 0).getTime();
+            const timeA = new Date(getSubmittedAtValue(a) || 0).getTime();
+            const timeB = new Date(getSubmittedAtValue(b) || 0).getTime();
             return (timeA - timeB) * direction;
         }
         if (sortConfig.key === 'lastUpdated') {
@@ -621,7 +623,7 @@ export function AdminApplicationTable({
                 </button>
             ),
             cell: (app: Application) => (
-                <span className="text-sm text-slate-700">{app.timeline?.submittedAt ? new Date(app.timeline.submittedAt).toLocaleDateString() : "-"}</span>
+                <span className="text-sm text-slate-700">{getSubmittedAtValue(app) ? new Date(getSubmittedAtValue(app)).toLocaleDateString() : "-"}</span>
             ),
         },
         {

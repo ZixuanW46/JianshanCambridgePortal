@@ -157,15 +157,9 @@ export default function AcceptanceNextStepPage() {
                                 <h2 className="text-lg font-bold text-slate-900">Bank Details</h2>
                             </div>
                             <div className="space-y-2 text-sm leading-6 text-slate-700">
-                                <p><span className="font-semibold">Account Name:</span> Jianshan Scholarship Ltd.</p>
-                                <p><span className="font-semibold">Bank Name:</span> Example Bank PLC</p>
-                                <p><span className="font-semibold">Sort Code:</span> 00-11-22</p>
-                                <p><span className="font-semibold">Account Number:</span> 12345678</p>
-                                <p><span className="font-semibold">IBAN:</span> GB00 EXAM 0011 2212 3456 78</p>
-                                <p><span className="font-semibold">SWIFT / BIC:</span> EXAMPGB2L</p>
-                                <p className="pt-2 text-slate-500">
-                                    Placeholder bank details are shown here for now and can be replaced later.
-                                </p>
+                                <p><span className="font-semibold">Account Name:</span> Cambridge Capybara Society</p>
+                                <p><span className="font-semibold">Sort Code:</span> 30-99-50</p>
+                                <p><span className="font-semibold">Account Number:</span> 39293262</p>
                             </div>
                         </div>
 

@@ -31,6 +31,16 @@ export default function AdminDashboardPage() {
             try {
                 const apps = await dbService.getAllApplications();
                 setApplications(apps as Application[]);
+
+                void dbService.backfillMissingAiReviews(apps as Application[])
+                    .then(async (count) => {
+                        if (count === 0) return;
+                        const refreshed = await dbService.getAllApplications();
+                        setApplications(refreshed as Application[]);
+                    })
+                    .catch((error) => {
+                        console.error("Failed to backfill missing AI reviews:", error);
+                    });
             } catch (error) {
                 console.error("Failed to fetch applications:", error);
             } finally {
